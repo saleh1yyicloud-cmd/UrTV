@@ -25,6 +25,7 @@ FONTS = {
     "__HUWIYA_SB__": "huwiya-sb.woff",
     "__ZUNBURK__": "zunburk-bold.woff",
     "__ORNAMENT__": "ornament-mask.png",
+    "__BUILDING_LINES__": "building-lines.png",   # its line drawing (white = line), a CSS mask
     "__BUILDING__": "building.jpg",   # the new building's render, for the project chapter
 }
 PHOTOS = [

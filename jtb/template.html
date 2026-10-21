@@ -108,25 +108,49 @@ body{margin:0;background:var(--navy);color:var(--cream);font-family:var(--body);
   border:1px solid rgba(219,174,106,.55);border-radius:10rem;padding:1.2rem 3.2rem;background:rgba(var(--navy-rgb),.45)}
 .pill::before{content:"";width:1.2rem;height:1.2rem;border-radius:50%;background:var(--gold);box-shadow:0 0 1.6rem var(--gold)}
 
-/* project: the building's render, lit from the ground up to the completed share */
-.ch.proj{flex-direction:row;align-items:center;justify-content:space-between;gap:6rem}
-.ch.proj .txt{flex:none;width:50rem;display:flex;flex-direction:column;gap:2.4rem}
-.ch.proj h2{font-size:6.4rem}
-.bld{position:relative;flex:none;width:94rem;aspect-ratio:1800/843;
-  -webkit-mask:linear-gradient(to left,transparent,#000 9%,#000 91%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 80%,transparent);
+/* project: from blueprint to reality — the building is drawn as an architect's line drawing on a drafting
+   grid, then a gold line rises from the ground and turns the drawing into the lit building up to the share
+   already built; a ruler beside it measures the rise. The render's ground and roof sit at 92% and 7% of it. */
+.ch.proj{flex-direction:row;align-items:center;justify-content:space-between;gap:13rem}
+.ch.proj .txt{flex:none;width:34rem;display:flex;flex-direction:column;gap:2.2rem}
+.ch.proj h2{font-size:5.6rem}
+.ch.proj .big{flex-direction:column;align-items:flex-start;gap:.4rem}
+.ch.proj .big .pct{font-size:18rem}
+.ch.proj .note{font-size:2.4rem;color:var(--sky);line-height:1.7}
+.site{position:relative;flex:none;width:100rem;aspect-ratio:1400/656}
+.site .pic{position:absolute;inset:0;
+  -webkit-mask:linear-gradient(to left,transparent,#000 6%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 6%,#000 86%,transparent);
   -webkit-mask-composite:source-in;
-  mask:linear-gradient(to left,transparent,#000 9%,#000 91%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 80%,transparent);
+  mask:linear-gradient(to left,transparent,#000 6%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 6%,#000 86%,transparent);
   mask-composite:intersect}
-.bld img{position:absolute;inset:0;width:100%;height:100%;display:block}
-.bld .ghost{filter:grayscale(1) brightness(.5) contrast(.85) sepia(.2) hue-rotate(170deg);opacity:.5}
-.bld .lit{filter:brightness(1.12) saturate(1.1)}
-.bld .lit{clip-path:inset(92% 0 0 0);transition:clip-path 2.6s cubic-bezier(.2,.7,.2,1) .7s}
-.bld .lvl{position:absolute;right:6%;left:6%;top:92%;height:0;border-top:.3rem solid var(--gold);
-  box-shadow:0 0 2.4rem .4rem rgba(219,174,106,.55);transition:top 2.6s cubic-bezier(.2,.7,.2,1) .7s}
-.bld .lvl span{position:absolute;right:0;bottom:1.4rem;font-family:var(--display);font-weight:700;font-size:3.6rem;
-  color:var(--gold-2);background:rgba(var(--navy-rgb),.78);border:1px solid rgba(219,174,106,.5);border-radius:10rem;padding:.6rem 2rem}
-.focus{position:absolute;inset:0;background:var(--navy);opacity:0;transition:opacity 1.6s ease;pointer-events:none}
-.focus.on{opacity:.82}
+.site .lines{position:absolute;inset:0;background:var(--sky);opacity:.85;
+  -webkit-mask:url(data:image/png;base64,__BUILDING_LINES__) center/100% 100% no-repeat;
+  mask:url(data:image/png;base64,__BUILDING_LINES__) center/100% 100% no-repeat;
+  mask-mode:luminance;-webkit-mask-source-type:luminance;
+  clip-path:inset(0 0 0 100%);transition:clip-path .5s ease}
+.ch.on .site .lines{clip-path:inset(0 0 0 0);transition:clip-path 2s cubic-bezier(.45,0,.2,1) .5s}
+.site .lit{position:absolute;inset:0;width:100%;height:100%;display:block;filter:brightness(1.1) saturate(1.1);
+  clip-path:inset(92% 0 0 0);transition:clip-path 3s cubic-bezier(.3,.6,.2,1) 2.4s}
+.site .scan{position:absolute;right:-7.2rem;left:2%;top:92%;height:.3rem;
+  background:linear-gradient(to left,var(--gold-2),var(--gold) 12%,var(--gold) 80%,rgba(219,174,106,0));
+  box-shadow:0 0 2.4rem .4rem rgba(219,174,106,.5);opacity:0;
+  transition:top 3s cubic-bezier(.3,.6,.2,1) 2.4s,opacity .6s ease 2.2s}
+.ch.on .site .scan{opacity:1}
+.site .scan span{position:absolute;left:4%;bottom:1.6rem;font-family:var(--display);font-weight:700;font-size:3.4rem;
+  color:var(--navy);background:linear-gradient(180deg,var(--gold-2),var(--gold));border-radius:10rem;padding:.5rem 2.2rem;
+  box-shadow:0 1rem 3rem rgba(0,0,0,.35)}
+.site .ruler{position:absolute;right:-7.2rem;top:7%;height:85%;width:6rem;border-right:.2rem solid rgba(157,218,229,.45)}
+.site .ruler i{position:absolute;right:0;width:1.6rem;height:.2rem;background:rgba(157,218,229,.6)}
+.site .ruler i.minor{width:.8rem;background:rgba(157,218,229,.35)}
+.site .ruler b{position:absolute;right:2.4rem;transform:translateY(-50%);font-weight:400;font-size:1.8rem;color:var(--sky);opacity:.8}
+.focus{position:absolute;inset:0;opacity:0;transition:opacity 1.6s ease;pointer-events:none;
+  background:
+    linear-gradient(rgba(157,218,229,.07) 1px,transparent 1px) 0 0/24rem 24rem,
+    linear-gradient(90deg,rgba(157,218,229,.07) 1px,transparent 1px) 0 0/24rem 24rem,
+    linear-gradient(rgba(157,218,229,.035) 1px,transparent 1px) 0 0/4.8rem 4.8rem,
+    linear-gradient(90deg,rgba(157,218,229,.035) 1px,transparent 1px) 0 0/4.8rem 4.8rem,
+    radial-gradient(90% 80% at 40% 45%,#0b3a5e,var(--navy))}
+.focus.on{opacity:.96}
 .big{display:flex;align-items:baseline;gap:2.4rem}
 .big .pct{font-family:var(--display);font-weight:700;font-size:20rem;line-height:.9;color:var(--gold);
   background:linear-gradient(180deg,var(--gold-2) 10%,var(--gold) 70%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -425,14 +449,22 @@ function chapterEl(c){
     var p = el("div", "pct", ar(0) + "٪"); p.dataset.v = pct; p.dataset.suffix = "٪";
     big.appendChild(p); big.appendChild(el("div", "of", "مكتمل"));
     txt.appendChild(big);
+    txt.appendChild(reveal(el("div", "note", "من المخطط إلى الواقع… والبناء يرتفع"), i++));
     // the render's ground line and roof line, as shares of the picture's height
-    var bld = reveal(el("div", "bld"), 1), cut = (92 - pct * (92 - 7) / 100).toFixed(2) + "%";
-    var ghost = el("img", "ghost"); ghost.src = BUILDING; ghost.alt = "";
+    var site = el("div", "site"), pic = el("div", "pic"), cut = (92 - pct * (92 - 7) / 100).toFixed(2) + "%";
+    pic.appendChild(el("div", "lines"));
     var lit = el("img", "lit"); lit.src = BUILDING; lit.alt = "مبنى الجمعية الجديد";
-    var lvl = el("div", "lvl"); lvl.appendChild(el("span", null, ar(pct) + "٪"));
-    lit.dataset.cut = lvl.dataset.cut = cut;
-    bld.appendChild(ghost); bld.appendChild(lit); bld.appendChild(lvl);
-    d.appendChild(txt); d.appendChild(bld);
+    pic.appendChild(lit); site.appendChild(pic);
+    var ruler = el("div", "ruler");
+    for (var k = 0; k <= 20; k++) {
+      var tk = el("i", k % 5 ? "minor" : null); tk.style.bottom = (k * 5) + "%"; ruler.appendChild(tk);
+      if (k % 5 === 0) { var lb = el("b", null, ar(k * 5) + "٪"); lb.style.top = (100 - k * 5) + "%"; ruler.appendChild(lb) }
+    }
+    site.appendChild(ruler);
+    var scan = el("div", "scan"); scan.appendChild(el("span", null, ar(pct) + "٪"));
+    site.appendChild(scan);
+    lit.dataset.cut = scan.dataset.cut = cut;
+    d.appendChild(txt); d.appendChild(site);
     var facts = reveal(el("div", "facts"), i++);
     var unit = state.unit === "%" ? "٪" : " " + (state.unit || "");
     if (state.unit !== "%") {   // a percentage already says it all
@@ -471,7 +503,7 @@ function countUp(root){
     if (k < 1 && root.classList.contains("on")) requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  Array.prototype.forEach.call(root.querySelectorAll(".bld [data-cut]"), function(x){
+  Array.prototype.forEach.call(root.querySelectorAll(".site [data-cut]"), function(x){
     if (x.classList.contains("lit")) x.style.clipPath = "inset(" + x.dataset.cut + " 0 0 0)";
     else x.style.top = x.dataset.cut;
   });
@@ -496,7 +528,7 @@ function advance(){
     prev.classList.remove("on"); prev.classList.add("leaving");
     setTimeout(function(){
       prev.classList.remove("leaving");
-      Array.prototype.forEach.call(prev.querySelectorAll(".bld [data-cut]"), function(x){ x.style.clipPath = ""; x.style.top = "" });
+      Array.prototype.forEach.call(prev.querySelectorAll(".site [data-cut]"), function(x){ x.style.clipPath = ""; x.style.top = "" });
     }, 600);
   }
   var ms = chapters[at].kind === "stats" ? STATS_MS : OTHER_MS;
