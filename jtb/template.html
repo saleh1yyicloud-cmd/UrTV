@@ -108,49 +108,30 @@ body{margin:0;background:var(--navy);color:var(--cream);font-family:var(--body);
   border:1px solid rgba(219,174,106,.55);border-radius:10rem;padding:1.2rem 3.2rem;background:rgba(var(--navy-rgb),.45)}
 .pill::before{content:"";width:1.2rem;height:1.2rem;border-radius:50%;background:var(--gold);box-shadow:0 0 1.6rem var(--gold)}
 
-/* project: from blueprint to reality — the building is drawn as an architect's line drawing on a drafting
-   grid, then a gold line rises from the ground and turns the drawing into the lit building up to the share
-   already built; a ruler beside it measures the rise. The render's ground and roof sit at 92% and 7% of it. */
-.ch.proj{flex-direction:row;align-items:center;justify-content:space-between;gap:13rem}
-.ch.proj .txt{flex:none;width:34rem;display:flex;flex-direction:column;gap:2.2rem}
-.ch.proj h2{font-size:5.6rem}
+/* project: lights on — the new building fills the screen at night, dark; its windows come on one by one,
+   from the ground floor up, until the share already built is lit, while the camera drifts closer. */
+.ch.proj{align-items:flex-start}
+.ch.proj .txt{width:44rem;display:flex;flex-direction:column;gap:2.2rem}
+.ch.proj h2{font-size:6rem}
 .ch.proj .big{flex-direction:column;align-items:flex-start;gap:.4rem}
-.ch.proj .big .pct{font-size:18rem}
-.ch.proj .note{font-size:2.4rem;color:var(--sky);line-height:1.7}
-.site{position:relative;flex:none;width:100rem;aspect-ratio:1400/656}
-.site .pic{position:absolute;inset:0;
-  -webkit-mask:linear-gradient(to left,transparent,#000 6%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 6%,#000 86%,transparent);
+.ch.proj .big .pct{font-size:20rem}
+.ch.proj .note{font-size:2.6rem;color:var(--sky);line-height:1.7}
+.scene{position:absolute;left:0;top:0;width:150rem;height:108rem;opacity:0;transition:opacity 1.4s ease;pointer-events:none;
+  -webkit-mask:linear-gradient(to left,transparent,#000 24%),linear-gradient(to top,transparent,#000 22%,#000 90%,transparent);
   -webkit-mask-composite:source-in;
-  mask:linear-gradient(to left,transparent,#000 6%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 6%,#000 86%,transparent);
+  mask:linear-gradient(to left,transparent,#000 24%),linear-gradient(to top,transparent,#000 22%,#000 90%,transparent);
   mask-composite:intersect}
-.site .lines{position:absolute;inset:0;background:var(--sky);opacity:.85;
-  -webkit-mask:url(data:image/png;base64,__BUILDING_LINES__) center/100% 100% no-repeat;
-  mask:url(data:image/png;base64,__BUILDING_LINES__) center/100% 100% no-repeat;
-  mask-mode:luminance;-webkit-mask-source-type:luminance;
-  clip-path:inset(0 0 0 100%);transition:clip-path .5s ease}
-.ch.on .site .lines{clip-path:inset(0 0 0 0);transition:clip-path 2s cubic-bezier(.45,0,.2,1) .5s}
-.site .lit{position:absolute;inset:0;width:100%;height:100%;display:block;filter:brightness(1.1) saturate(1.1);
-  clip-path:inset(92% 0 0 0);transition:clip-path 3s cubic-bezier(.3,.6,.2,1) 2.4s}
-.site .scan{position:absolute;right:-7.2rem;left:2%;top:92%;height:.3rem;
-  background:linear-gradient(to left,var(--gold-2),var(--gold) 12%,var(--gold) 80%,rgba(219,174,106,0));
-  box-shadow:0 0 2.4rem .4rem rgba(219,174,106,.5);opacity:0;
-  transition:top 3s cubic-bezier(.3,.6,.2,1) 2.4s,opacity .6s ease 2.2s}
-.ch.on .site .scan{opacity:1}
-.site .scan span{position:absolute;left:4%;bottom:1.6rem;font-family:var(--display);font-weight:700;font-size:3.4rem;
-  color:var(--navy);background:linear-gradient(180deg,var(--gold-2),var(--gold));border-radius:10rem;padding:.5rem 2.2rem;
-  box-shadow:0 1rem 3rem rgba(0,0,0,.35)}
-.site .ruler{position:absolute;right:-7.2rem;top:7%;height:85%;width:6rem;border-right:.2rem solid rgba(157,218,229,.45)}
-.site .ruler i{position:absolute;right:0;width:1.6rem;height:.2rem;background:rgba(157,218,229,.6)}
-.site .ruler i.minor{width:.8rem;background:rgba(157,218,229,.35)}
-.site .ruler b{position:absolute;right:2.4rem;transform:translateY(-50%);font-weight:400;font-size:1.8rem;color:var(--sky);opacity:.8}
-.focus{position:absolute;inset:0;opacity:0;transition:opacity 1.6s ease;pointer-events:none;
-  background:
-    linear-gradient(rgba(157,218,229,.07) 1px,transparent 1px) 0 0/24rem 24rem,
-    linear-gradient(90deg,rgba(157,218,229,.07) 1px,transparent 1px) 0 0/24rem 24rem,
-    linear-gradient(rgba(157,218,229,.035) 1px,transparent 1px) 0 0/4.8rem 4.8rem,
-    linear-gradient(90deg,rgba(157,218,229,.035) 1px,transparent 1px) 0 0/4.8rem 4.8rem,
-    radial-gradient(90% 80% at 40% 45%,#0b3a5e,var(--navy))}
-.focus.on{opacity:.96}
+.scene.on{opacity:1}
+.scene .cam{position:absolute;inset:0;transform-origin:44% 60%}
+.scene.on .cam{animation:push 14s cubic-bezier(.3,0,.3,1) forwards}
+@keyframes push{from{transform:scale(1)}to{transform:scale(1.08)}}
+.scene img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.scene .base{filter:brightness(.24) saturate(.5)}
+.scene .w{opacity:0;filter:brightness(1.15) saturate(1.1)}
+.scene.on .w{animation:lighton 1.2s linear var(--t) forwards}
+@keyframes lighton{0%{opacity:0}10%{opacity:.85}18%{opacity:.1}30%{opacity:.95}40%{opacity:.45}58%,100%{opacity:1}}
+.focus{position:absolute;inset:0;background:var(--navy);opacity:0;transition:opacity 1.4s ease;pointer-events:none}
+.focus.on{opacity:.94}
 .big{display:flex;align-items:baseline;gap:2.4rem}
 .big .pct{font-family:var(--display);font-weight:700;font-size:20rem;line-height:.9;color:var(--gold);
   background:linear-gradient(180deg,var(--gold-2) 10%,var(--gold) 70%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -210,6 +191,7 @@ body{margin:0;background:var(--navy);color:var(--cream);font-family:var(--body);
 <div class="boot" id="boot"></div>
 
 <main class="canvas" id="canvas">
+  <div class="scene" id="scene"></div>
   <header class="top">
     <div class="brand">
       __LOGO__
@@ -289,6 +271,43 @@ var AHADITH = [
 ];
 var STATS_MS = 16000, OTHER_MS = 13000;
 var BUILDING = "data:image/jpeg;base64,__BUILDING__";
+
+/* the render's windows: four floors, each a left wing, the central tower and a right wing, in the PDF page's
+   pixels (the picture is that page cropped to x 171–2709, full height) */
+var FACADE = { x0: 171, w: 2538, h: 1826,
+  floors: [[1010, 1140], [825, 960], [630, 785], [445, 595]],          // ground floor first
+  wings: [[388, 1105, 8], [1290, 1605, 1], [1788, 2505, 8]] };        // from x, to x, windows across
+var LIGHTS_START = 1.4, LIGHT_GAP = .42;
+function windows(){
+  var out = [];
+  FACADE.floors.forEach(function(f, fi){
+    var row = [];
+    FACADE.wings.forEach(function(g){
+      var step = (g[1] - g[0]) / g[2];
+      for (var k = 0; k < g[2]; k++) row.push({ x: g[0] + k * step, x2: g[0] + (k + 1) * step, y: f[0], y2: f[1] });
+    });
+    // within a floor the lights come on in a scattered order, not left to right
+    row.forEach(function(w, k){ w.o = (k * 7 + fi * 3) % row.length });
+    row.sort(function(a, b){ return a.o - b.o });
+    out = out.concat(row);
+  });
+  return out;
+}
+function lightsFor(pct){ var all = windows(); return all.slice(0, Math.round(all.length * pct / 100)) }
+function renderScene(pct){
+  var scene = document.getElementById("scene"), cam = el("div", "cam");
+  scene.textContent = "";
+  var base = el("img", "base"); base.src = BUILDING; base.alt = ""; cam.appendChild(base);
+  lightsFor(pct).forEach(function(w, k){
+    var im = el("img", "w"); im.src = BUILDING; im.alt = "";
+    var l = (w.x - FACADE.x0) / FACADE.w * 100, r = 100 - (w.x2 - FACADE.x0) / FACADE.w * 100;
+    var t = w.y / FACADE.h * 100, b = 100 - w.y2 / FACADE.h * 100;
+    im.style.clipPath = "inset(" + t.toFixed(2) + "% " + r.toFixed(2) + "% " + b.toFixed(2) + "% " + l.toFixed(2) + "%)";
+    im.style.setProperty("--t", (LIGHTS_START + k * LIGHT_GAP).toFixed(2) + "s");
+    cam.appendChild(im);
+  });
+  scene.appendChild(cam);
+}
 
 /* prayer times for Buraydah, computed on the device (Umm al-Qurā) */
 var LAT = 26.3260, LNG = 43.9750, TZ = 3;
@@ -449,22 +468,9 @@ function chapterEl(c){
     var p = el("div", "pct", ar(0) + "٪"); p.dataset.v = pct; p.dataset.suffix = "٪";
     big.appendChild(p); big.appendChild(el("div", "of", "مكتمل"));
     txt.appendChild(big);
-    txt.appendChild(reveal(el("div", "note", "من المخطط إلى الواقع… والبناء يرتفع"), i++));
-    // the render's ground line and roof line, as shares of the picture's height
-    var site = el("div", "site"), pic = el("div", "pic"), cut = (92 - pct * (92 - 7) / 100).toFixed(2) + "%";
-    pic.appendChild(el("div", "lines"));
-    var lit = el("img", "lit"); lit.src = BUILDING; lit.alt = "مبنى الجمعية الجديد";
-    pic.appendChild(lit); site.appendChild(pic);
-    var ruler = el("div", "ruler");
-    for (var k = 0; k <= 20; k++) {
-      var tk = el("i", k % 5 ? "minor" : null); tk.style.bottom = (k * 5) + "%"; ruler.appendChild(tk);
-      if (k % 5 === 0) { var lb = el("b", null, ar(k * 5) + "٪"); lb.style.top = (100 - k * 5) + "%"; ruler.appendChild(lb) }
-    }
-    site.appendChild(ruler);
-    var scan = el("div", "scan"); scan.appendChild(el("span", null, ar(pct) + "٪"));
-    site.appendChild(scan);
-    lit.dataset.cut = scan.dataset.cut = cut;
-    d.appendChild(txt); d.appendChild(site);
+    txt.appendChild(reveal(el("div", "note", "كل نافذة تُضاء… خطوة نحو الاكتمال"), i++));
+    p.dataset.delay = LIGHTS_START * 1000; p.dataset.dur = lightsFor(pct).length * LIGHT_GAP * 1000 + 600;
+    d.appendChild(txt);
     var facts = reveal(el("div", "facts"), i++);
     var unit = state.unit === "%" ? "٪" : " " + (state.unit || "");
     if (state.unit !== "%") {   // a percentage already says it all
@@ -493,24 +499,25 @@ function chapterEl(c){
   return d;
 }
 function countUp(root){
-  var nodes = root.querySelectorAll("[data-v]"), t0 = performance.now() + 500, dur = 2000;
+  var nodes = root.querySelectorAll("[data-v]"), start = performance.now();
   function frame(t){
-    var k = Math.max(0, Math.min(1, (t - t0) / dur)), e = 1 - Math.pow(1 - k, 4);
+    var busy = false;
     Array.prototype.forEach.call(nodes, function(n){
+      // a node with its own timing (the building's share) keeps pace with the windows, so it counts evenly
+      var paced = !!n.dataset.dur, t0 = start + (paced ? +n.dataset.delay : 500), dur = paced ? +n.dataset.dur : 2000;
+      var k = Math.max(0, Math.min(1, (t - t0) / dur)), e = paced ? k : 1 - Math.pow(1 - k, 4);
       var v = Number(n.dataset.v), dp = decimals(n.dataset.v);
-      n.textContent = num(v * e, dp) + (n.dataset.suffix || "");
+      n.textContent = num(paced ? Math.floor(v * e) : v * e, dp) + (n.dataset.suffix || "");
+      if (k < 1) busy = true;
     });
-    if (k < 1 && root.classList.contains("on")) requestAnimationFrame(frame);
+    if (busy && root.classList.contains("on")) requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  Array.prototype.forEach.call(root.querySelectorAll(".site [data-cut]"), function(x){
-    if (x.classList.contains("lit")) x.style.clipPath = "inset(" + x.dataset.cut + " 0 0 0)";
-    else x.style.top = x.dataset.cut;
-  });
 }
 function renderChapters(){
   hero.textContent = ""; chaptersEl.textContent = "";
   chapters = buildChapters();
+  if (state.target) renderScene(Math.max(0, Math.min(100, Math.round(Number(state.done) / Number(state.target) * 100))));
   chapters.forEach(function(c){
     hero.appendChild(chapterEl(c));
     var s = el("span"); s.appendChild(el("i")); chaptersEl.appendChild(s);
@@ -528,11 +535,11 @@ function advance(){
     prev.classList.remove("on"); prev.classList.add("leaving");
     setTimeout(function(){
       prev.classList.remove("leaving");
-      Array.prototype.forEach.call(prev.querySelectorAll(".site [data-cut]"), function(x){ x.style.clipPath = ""; x.style.top = "" });
     }, 600);
   }
-  var ms = chapters[at].kind === "stats" ? STATS_MS : OTHER_MS;
+  var ms = chapters[at].kind === "stats" || chapters[at].kind === "proj" ? STATS_MS : OTHER_MS;
   document.getElementById("focus").classList.toggle("on", chapters[at].kind === "proj");
+  document.getElementById("scene").classList.toggle("on", chapters[at].kind === "proj");
   setTimeout(function(){ k[at].classList.add("on"); countUp(k[at]) }, prev ? 450 : 0);
   Array.prototype.forEach.call(dots, function(d, i){
     d.className = i < at ? "done" : "";
