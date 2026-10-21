@@ -31,7 +31,7 @@ from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.x509.oid import NameOID
 
 ALIAS = b"urtv"   # android/*/build.gradle signs with this alias
-REPO = "tshi-dev/UrTV"
+REPO = "saleh1yyicloud-cmd/UrTV"
 
 
 def make(password):

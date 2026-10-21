@@ -1,0 +1,720 @@
+<title>شاشة تحفيظ بريدة</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap">
+<style>
+/* Layout: a full-bleed board — photograph behind, navy scrim over it, the association's gold rosette watermarking the content stage; clock and prayer rail on the right, rotating stage on the left, prayer ribbon along the bottom. Palette and faces are the association's own. */
+@font-face{font-family:"Huwiya";src:url(data:font/woff;base64,__HUWIYA_REG__) format("woff");font-weight:400;font-display:swap}
+@font-face{font-family:"Huwiya";src:url(data:font/woff;base64,__HUWIYA_SB__) format("woff");font-weight:600;font-display:swap}
+@font-face{font-family:"Zunburk";src:url(data:font/woff;base64,__ZUNBURK__) format("woff");font-weight:700;font-display:swap}
+
+:root{
+  --navy:#072C49;        /* ground */
+  --navy-2:#0b3a5e;      /* raised panel */
+  --teal:#007A97;        /* accent */
+  --sky:#9DDAE5;         /* secondary text */
+  --gold:#DBAE6A;        /* highlight, ornament */
+  --cream:#ECE6DD;       /* primary text */
+  --violet:#A29CCD;      /* tertiary accent */
+  --line:rgba(236,230,221,.14);
+  --display:"Zunburk","Huwiya",system-ui,sans-serif;
+  --quran:"Amiri Quran","Traditional Arabic",serif;
+  --body:"Huwiya","IBM Plex Sans Arabic",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--navy);color:var(--cream);font-family:var(--body);direction:rtl;overflow:hidden;
+  user-select:none;-webkit-user-select:none}
+body.kiosk{cursor:none}
+.shift{position:fixed;inset:0;transition:transform 3s ease}
+.night{position:fixed;inset:0;z-index:18;pointer-events:none;background:#000;opacity:0;transition:opacity 60s linear}
+.boot{position:fixed;inset:0;z-index:40;background:var(--navy);transition:opacity .9s ease}
+.boot.gone{opacity:0;pointer-events:none}
+
+/* ── background layers ── */
+.bg{position:fixed;inset:0;z-index:0}
+.bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.6s ease}
+.bg img.on{opacity:1}
+.scrim{position:fixed;inset:0;z-index:1;pointer-events:none;background:
+  linear-gradient(285deg,rgba(7,44,73,.30) 0%,rgba(7,44,73,.66) 38%,rgba(7,44,73,.93) 78%),
+  radial-gradient(130% 110% at 92% 4%,rgba(0,122,151,.30),transparent 58%)}
+.bg.empty ~ .scrim{background:linear-gradient(285deg,rgba(7,44,73,.72),rgba(7,44,73,.97)),radial-gradient(120% 100% at 90% 0%,rgba(0,122,151,.34),transparent 62%)}
+.rosette{position:fixed;z-index:1;pointer-events:none;inset-block-start:-6vh;inset-inline-start:-7vw;
+  width:min(66vh,54vw);aspect-ratio:345/400;background:var(--gold);opacity:.085;
+  -webkit-mask:url(data:image/png;base64,__ORNAMENT__) center/contain no-repeat;
+  mask:url(data:image/png;base64,__ORNAMENT__) center/contain no-repeat}
+
+/* ── board ── */
+.board{position:relative;z-index:2;height:100%;display:grid;
+  grid-template-columns:minmax(0,1.42fr) minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr) auto;gap:clamp(12px,1.5vw,30px);
+  padding-block:clamp(14px,2.4vh,30px);
+  padding-left:max(clamp(18px,2.2vw,44px),env(safe-area-inset-left,0px));
+  padding-right:max(clamp(18px,2.2vw,44px),env(safe-area-inset-right,0px))}
+
+/* ── masthead ── */
+.masthead{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:18px;
+  border-bottom:1px solid var(--line);padding-bottom:clamp(8px,1.1vh,18px)}
+.brand{display:flex;align-items:center;gap:clamp(12px,1.2vw,22px);min-width:0}
+.brand svg{height:clamp(44px,5.4vw,96px);width:auto;flex:none}
+.brand .tt{min-width:0}
+.brand h1{margin:0;font-family:var(--body);font-weight:600;font-size:clamp(16px,1.5vw,30px);line-height:1.25;color:var(--cream);text-wrap:balance}
+.brand p{margin:3px 0 0;color:var(--sky);font-size:clamp(10px,.85vw,16px);letter-spacing:.06em}
+.dates{text-align:left;flex:none}
+.dates .hijri{font-family:var(--display);font-weight:700;font-size:clamp(16px,1.6vw,34px);color:var(--gold);line-height:1.2}
+.dates .greg{color:var(--sky);font-size:clamp(10px,.85vw,16px);margin-top:4px}
+
+/* ── stage ── */
+.stage{position:relative;min-width:0;display:grid;
+  background:linear-gradient(200deg,rgba(0,122,151,.30),rgba(7,44,73,.74));backdrop-filter:blur(3px);
+  border:1px solid var(--line);border-radius:clamp(14px,1.4vw,26px);overflow:hidden}
+.stage::after{content:"";position:absolute;inset-block-start:0;inset-inline-start:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--gold),rgba(219,174,106,0))}
+.slide{grid-area:1/1;padding:clamp(18px,2.6vw,54px);display:flex;flex-direction:column;
+  justify-content:center;gap:clamp(10px,1.3vh,22px);min-width:0;opacity:0;transform:translateY(12px);
+  transition:opacity .7s ease,transform .7s ease;pointer-events:none}
+.slide.on{opacity:1;transform:none}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;
+  font-size:clamp(10px,.82vw,16px);letter-spacing:.18em;color:var(--gold);font-weight:600}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+.ayah{font-family:var(--quran);font-weight:400;font-size:clamp(20px,2.7vw,54px);line-height:2.1;
+  margin:0;color:var(--cream);text-wrap:balance}
+.ayah .mark{color:var(--gold)}
+.hadith{font-family:var(--display);font-weight:700;font-size:clamp(21px,2.9vw,58px);line-height:1.8;margin:0;color:var(--cream);text-wrap:balance}
+.attrib{color:var(--sky);font-size:clamp(11px,.95vw,20px)}
+.slide h2{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(21px,2.3vw,46px);
+  line-height:1.35;color:var(--cream);text-wrap:balance}
+.slide .body{margin:0;font-size:clamp(13px,1.15vw,25px);line-height:1.85;color:rgba(236,230,221,.82);max-width:36ch}
+.when{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;background:rgba(0,122,151,.32);
+  border:1px solid rgba(157,218,229,.34);color:var(--sky);border-radius:999px;
+  padding:7px 16px;font-size:clamp(11px,.95vw,19px);font-variant-numeric:tabular-nums}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:clamp(10px,1.1vw,22px)}
+.tile{background:rgba(7,44,73,.5);border:1px solid var(--line);border-radius:clamp(10px,1vw,18px);
+  padding:clamp(12px,1.3vw,24px);min-width:0;border-top:2px solid var(--teal)}
+.tile .n{font-family:var(--display);font-weight:700;font-size:clamp(25px,2.9vw,58px);line-height:1;
+  color:var(--gold);font-variant-numeric:tabular-nums}
+.tile .l{color:var(--sky);font-size:clamp(10px,.9vw,17px);margin-top:9px}
+
+.meter{height:clamp(13px,1.1vw,24px);border-radius:999px;background:rgba(7,44,73,.6);
+  border:1px solid var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));border-radius:999px;transition:width 1s ease}
+.meter-row{display:flex;justify-content:space-between;gap:12px;color:var(--sky);
+  font-size:clamp(11px,.95vw,19px);font-variant-numeric:tabular-nums}
+.meter-row b{color:var(--gold);font-family:var(--display);font-weight:700}
+
+/* ── rail ── */
+.rail{min-width:0;display:flex;flex-direction:column;gap:clamp(10px,1.4vh,22px)}
+.clockcard{background:linear-gradient(200deg,rgba(0,122,151,.34),rgba(7,44,73,.78));backdrop-filter:blur(3px);
+  border:1px solid var(--line);border-radius:clamp(14px,1.4vw,26px);
+  padding:clamp(12px,1.6vw,32px);text-align:center}
+.clock{font-family:var(--display);font-weight:700;font-size:clamp(44px,6.6vw,132px);line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--cream)}
+.clock .sec{font-size:.3em;color:var(--teal);margin-inline-start:.14em;vertical-align:super}
+.ampm{color:var(--sky);font-size:clamp(11px,1vw,21px);margin-top:6px;letter-spacing:.1em}
+.nextcard{background:rgba(0,122,151,.44);backdrop-filter:blur(3px);border:1px solid rgba(157,218,229,.3);
+  border-radius:clamp(14px,1.4vw,26px);padding:clamp(12px,1.5vw,30px);text-align:center;
+  flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:0}
+.nextcard .lbl{color:var(--sky);font-size:clamp(10px,.88vw,17px);letter-spacing:.1em}
+.nextcard .name{font-family:var(--display);font-weight:700;font-size:clamp(21px,2.3vw,44px);color:var(--cream)}
+.nextcard .cd{font-family:var(--display);font-weight:700;font-size:clamp(27px,3.2vw,62px);color:var(--gold);
+  font-variant-numeric:tabular-nums;line-height:1.15}
+.nextcard .cd small{font-size:.36em;color:var(--sky);font-family:var(--body);font-weight:400}
+
+/* ── ribbon ── */
+.ribbon{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:clamp(6px,.7vw,14px);border-top:1px solid var(--line);padding-top:clamp(10px,1.2vh,20px)}
+.p{background:rgba(7,44,73,.74);backdrop-filter:blur(3px);border:1px solid var(--line);border-radius:clamp(9px,.9vw,16px);
+  padding:clamp(8px,.9vw,18px) 6px;text-align:center;min-width:0}
+.p .pn{color:var(--sky);font-size:clamp(10px,.85vw,17px)}
+.p .pt{font-family:var(--display);font-weight:700;font-size:clamp(16px,1.7vw,34px);
+  font-variant-numeric:tabular-nums;margin-top:5px;color:var(--cream)}
+.p.now{background:var(--teal);border-color:var(--sky)}
+.p.now .pn{color:rgba(236,230,221,.85)}
+.p.now .pt{color:#fff}
+
+/* ── tools + editor ── */
+.tools{position:fixed;inset-block-end:0;inset-inline-start:0;z-index:20;display:flex;gap:8px;
+  padding:14px;padding-inline-start:max(14px,env(safe-area-inset-left,0px));
+  padding-block-end:max(14px,env(safe-area-inset-bottom,0px));opacity:.1;transition:opacity .25s}
+.tools:hover,.tools:focus-within{opacity:1}
+.tools button{font-family:var(--body);font-size:13px;color:var(--cream);background:rgba(7,44,73,.9);
+  border:1px solid var(--line);border-radius:999px;padding:7px 15px;cursor:pointer}
+.tools button:focus-visible,.panel :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.panel{position:fixed;inset:0;z-index:30;background:rgba(3,20,34,.86);backdrop-filter:blur(6px);
+  display:grid;place-items:center;padding:16px}
+.panel form{width:min(700px,100%);max-height:88vh;overflow:auto;background:var(--navy);
+  border:1px solid var(--line);border-radius:18px;padding:clamp(16px,2vw,28px);
+  display:flex;flex-direction:column;gap:14px}
+.panel h3{margin:0;font-family:var(--display);font-weight:700;font-size:23px;color:var(--gold)}
+.panel p.hint{margin:0;color:var(--sky);font-size:13px;line-height:1.75}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:13px;color:var(--sky)}
+.fld input,.fld textarea{font-family:var(--body);font-size:15px;color:var(--cream);
+  background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.fld textarea{min-height:92px;resize:vertical;line-height:1.75}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.shots{display:flex;flex-wrap:wrap;gap:8px}
+.shots figure{margin:0;position:relative;width:92px;height:62px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.shots img{width:100%;height:100%;object-fit:cover}
+.shots button{position:absolute;inset-block-start:3px;inset-inline-end:3px;border:0;border-radius:50%;
+  width:20px;height:20px;background:rgba(7,44,73,.88);color:var(--cream);font-size:12px;cursor:pointer;line-height:1}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row button{font-family:var(--body);font-size:14px;border-radius:999px;padding:10px 22px;cursor:pointer;
+  border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--cream)}
+.row button.primary{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}
+.status{color:var(--sky);font-size:13px;min-height:1.2em}
+
+@media (max-aspect-ratio:5/4) and (min-width:901px){
+  .board{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) auto}
+  .rail{flex-direction:row}
+  .clockcard{flex:1 1 44%}
+  .nextcard{flex:1 1 56%}
+  .clock{font-size:clamp(44px,9vw,120px)}
+}
+@media (min-aspect-ratio:12/5) and (min-width:901px){
+  .board{grid-template-columns:minmax(0,1.8fr) minmax(0,1fr)}
+}
+@media (max-width:900px){
+  body{overflow:auto}
+  .board{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;min-height:100%}
+  .rail{flex-direction:row;flex-wrap:wrap}
+  .clockcard,.nextcard{flex:1 1 220px}
+  .ribbon{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .slide .body{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){.slide,.bg img,.meter i{transition:none}}
+</style>
+
+<div class="shift" id="shift">
+<div class="bg" id="bg"></div>
+<div class="scrim"></div>
+<div class="rosette"></div>
+</div>
+<div class="night" id="night"></div>
+<div class="boot" id="boot"></div>
+
+<div class="board" id="board">
+  <header class="masthead">
+    <div class="brand">
+      __LOGO__
+      <div class="tt">
+        <h1 id="orgName">جمعية تحفيظ القرآن الكريم ببريدة</h1>
+        <p id="orgSub">إدارة الاتصال المؤسسي</p>
+      </div>
+    </div>
+    <div class="dates">
+      <div class="hijri" id="hijri">—</div>
+      <div class="greg" id="greg">—</div>
+    </div>
+  </header>
+
+  <section class="stage" id="stage" aria-live="polite"></section>
+
+  <aside class="rail">
+    <div class="clockcard">
+      <div class="clock" id="clock">—</div>
+      <div class="ampm" id="ampm">—</div>
+    </div>
+    <div class="nextcard">
+      <div class="lbl">الصلاة القادمة</div>
+      <div class="name" id="nextName">—</div>
+      <div class="cd" id="nextCd">—</div>
+      <div class="lbl" id="nextAt">—</div>
+    </div>
+  </aside>
+
+  <nav class="ribbon" id="ribbon"></nav>
+</div>
+
+<div class="tools">
+  <button type="button" id="editBtn">تحديث البيانات</button>
+  <button type="button" id="fsBtn">ملء الشاشة</button>
+</div>
+
+<div class="panel" id="panel" hidden>
+  <form id="form">
+    <h3>تحديث بيانات الشاشة</h3>
+    <p class="hint">التعديلات تُحفظ لكل الشاشات حين تكون داخلًا بحسابك ولك صلاحية التحرير، وإلا فعلى هذا الجهاز وحده.</p>
+    <div class="fld"><label for="f-org">اسم الجهة</label><input id="f-org" name="org"></div>
+    <div class="fld"><label for="f-sub">السطر الفرعي</label><input id="f-sub" name="sub"></div>
+    <div class="fld"><label for="f-stats">الأرقام — عنوان المجموعة يبدأ بعلامة #، ثم سطر لكل رقم: الرقم | التسمية</label><textarea id="f-stats" name="stats" style="min-height:160px"></textarea></div>
+    <div class="fld"><label for="f-proj">اسم المشروع</label><input id="f-proj" name="proj"></div>
+    <div class="two">
+      <div class="fld"><label for="f-done">المنجَز</label><input id="f-done" name="done" inputmode="numeric"></div>
+      <div class="fld"><label for="f-target">المستهدف</label><input id="f-target" name="target" inputmode="numeric"></div>
+    </div>
+    <div class="two">
+      <div class="fld"><label for="f-unit">الوحدة (ريال / %)</label><input id="f-unit" name="unit"></div>
+      <div class="fld"><label for="f-deadline">تاريخ التسليم (YYYY-MM-DD)</label><input id="f-deadline" name="deadline" inputmode="numeric"></div>
+    </div>
+    <div class="fld"><label for="f-ann">الإعلانات — إعلان في كل سطر: العنوان | النص | الوقت</label><textarea id="f-ann" name="ann"></textarea></div>
+    <div class="fld" id="photoFld" hidden>
+      <label for="f-photos">صور الخلفية (أفقية، تتبدل خلف المحتوى)</label>
+      <input id="f-photos" name="photos" type="file" accept="image/*" multiple>
+      <div class="shots" id="shots"></div>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="row">
+      <button type="submit" class="primary">حفظ</button>
+      <button type="button" id="closeBtn">إغلاق</button>
+    </div>
+  </form>
+</div>
+
+<script>
+"use strict";
+var DEFAULTS = {
+  org: "جمعية تحفيظ القرآن الكريم ببريدة",
+  sub: "إدارة الاتصال المؤسسي",
+  proj: "مبنى الجمعية الجديد", done: 62, target: 100, unit: "%", deadline: "",
+  photos: [],
+  stats: [
+    { title: "ثمار الربع الثالث ١٤٤٨هـ", tiles: [
+      { n: "21", l: "خاتمًا للقرآن في برامج الإقراء" },
+      { n: "1298", l: "مسجَّلًا في حملة «في كل حي»" },
+      { n: "60640", l: "حضورًا في الحِلَق المجتمعية النسائية" },
+      { n: "960", l: "نزيلًا استفادوا من الحلقات الإصلاحية" }
+    ]},
+    { title: "معهد الفتيات — رحلة تبدأ بخطوة", tiles: [
+      { n: "1386", l: "تسجيلًا إلكترونيًّا في مسارات المعهد" },
+      { n: "745", l: "متقدمة" },
+      { n: "572", l: "مقبولة بنسبة ٧٦٫٨٪" },
+      { n: "23", l: "جنسية بين المقبولات" }
+    ]},
+    { title: "البرامج الصيفية ١٤٤٧هـ", tiles: [
+      { n: "6", l: "برامج منفذة" },
+      { n: "1000", l: "مستفيدة فأكثر" },
+      { n: "183", l: "معلمة مؤهلة" },
+      { n: "3.85", l: "متوسط التقييم من ٤" }
+    ]}
+  ],
+  ann: [
+    { t: "التسجيل في الحلقات الصيفية", b: "فُتح التسجيل لحلقات الصيف في جميع الفروع، والمقاعد محدودة.", w: "حتى نهاية الشهر" },
+    { t: "حفل تكريم الحفاظ", b: "تكريم خاتمي القرآن الكريم لهذا العام بحضور أعضاء مجلس الإدارة.", w: "الخميس — ٨:٠٠ مساءً" }
+  ]
+};
+var AYAT = [
+  { t: "وَلَقَدْ يَسَّرْنَا ٱلْقُرْءَانَ لِلذِّكْرِ فَهَلْ مِن مُّدَّكِرٍۢ", s: "القمر ١٧" },
+  { t: "أَفَلَا يَتَدَبَّرُونَ ٱلْقُرْءَانَ أَمْ عَلَىٰ قُلُوبٍ أَقْفَالُهَآ", s: "محمد ٢٤" },
+  { t: "كِتَٰبٌ أَنزَلْنَٰهُ إِلَيْكَ مُبَٰرَكٌۭ لِّيَدَّبَّرُوٓا۟ ءَايَٰتِهِۦ وَلِيَتَذَكَّرَ أُو۟لُوا۟ ٱلْأَلْبَٰبِ", s: "ص ٢٩" },
+  { t: "أَوْ زِدْ عَلَيْهِ وَرَتِّلِ ٱلْقُرْءَانَ تَرْتِيلًا", s: "المزمل ٤" }
+];
+var AHADITH = [
+  { t: "خيركم من تعلّم القرآن وعلّمه", s: "رواه البخاري" },
+  { t: "الماهر بالقرآن مع السفرة الكرام البررة", s: "متفق عليه" },
+  { t: "اقرؤوا القرآن فإنه يأتي يوم القيامة شفيعًا لأصحابه", s: "رواه مسلم" },
+  { t: "من قرأ حرفًا من كتاب الله فله به حسنة، والحسنة بعشر أمثالها", s: "رواه الترمذي" }
+];
+
+/* prayer times for Buraydah, computed on the device (Umm al-Qurā) */
+var LAT = 26.3260, LNG = 43.9750, TZ = 3;
+function rad(d){ return d * Math.PI / 180 }
+function deg(r){ return r * 180 / Math.PI }
+function julian(y, m, d){
+  if (m <= 2) { y -= 1; m += 12 }
+  var A = Math.floor(y / 100), B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
+}
+function solar(JD){
+  var T = (JD - 2451545) / 36525;
+  var L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
+  var M = 357.52911 + 35999.05029 * T - 0.0001537 * T * T;
+  var e = 0.016708634 - 0.000042037 * T;
+  var C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(rad(M))
+        + (0.019993 - 0.000101 * T) * Math.sin(rad(2 * M))
+        + 0.000289 * Math.sin(rad(3 * M));
+  var omega = 125.04 - 1934.136 * T;
+  var lambda = L0 + C - 0.00569 - 0.00478 * Math.sin(rad(omega));
+  var eps0 = 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60;
+  var eps = eps0 + 0.00256 * Math.cos(rad(omega));
+  var decl = deg(Math.asin(Math.sin(rad(eps)) * Math.sin(rad(lambda))));
+  var y = Math.pow(Math.tan(rad(eps / 2)), 2);
+  var eq = (y * Math.sin(2 * rad(L0)) - 2 * e * Math.sin(rad(M))
+          + 4 * e * y * Math.sin(rad(M)) * Math.cos(2 * rad(L0))
+          - 0.5 * y * y * Math.sin(4 * rad(L0)) - 1.25 * e * e * Math.sin(2 * rad(M)));
+  return { decl: decl, eq: deg(eq) * 4 };
+}
+function prayerTimes(date){
+  var JD = julian(date.getFullYear(), date.getMonth() + 1, date.getDate()) + 0.5 - LNG / 360;
+  var s = solar(JD), decl = s.decl;
+  var dhuhr = 12 + TZ - LNG / 15 - s.eq / 60;
+  function ha(angle){
+    var c = (-Math.sin(rad(angle)) - Math.sin(rad(LAT)) * Math.sin(rad(decl)))
+          / (Math.cos(rad(LAT)) * Math.cos(rad(decl)));
+    return deg(Math.acos(Math.max(-1, Math.min(1, c)))) / 15;
+  }
+  var asrAngle = deg(Math.atan(1 / (1 + Math.tan(rad(Math.abs(LAT - decl))))));
+  var ac = (Math.sin(rad(asrAngle)) - Math.sin(rad(LAT)) * Math.sin(rad(decl)))
+         / (Math.cos(rad(LAT)) * Math.cos(rad(decl)));
+  var asrH = deg(Math.acos(Math.max(-1, Math.min(1, ac)))) / 15;
+  var maghrib = dhuhr + ha(0.833);
+  return [
+    { k: "fajr",    n: "الفجر",  h: dhuhr - ha(18.5) },
+    { k: "sunrise", n: "الشروق", h: dhuhr - ha(0.833) },
+    { k: "dhuhr",   n: "الظهر",  h: dhuhr },
+    { k: "asr",     n: "العصر",  h: dhuhr + asrH },
+    { k: "maghrib", n: "المغرب", h: maghrib },
+    { k: "isha",    n: "العشاء", h: maghrib + 1.5 }
+  ];
+}
+function pad(n){ return (n < 10 ? "0" : "") + n }
+function hm(h){
+  var m = Math.round(h * 60); m = ((m % 1440) + 1440) % 1440;
+  var hh = Math.floor(m / 60), h12 = hh % 12 === 0 ? 12 : hh % 12;
+  return pad(h12) + ":" + pad(m % 60);
+}
+function counted(n, one, two, few, many){
+  if (n === 1) return one;
+  if (n === 2) return two;
+  if (n >= 3 && n <= 10) return ar(n) + " " + few;
+  return ar(n) + " " + many;
+}
+function untilText(h, m){
+  if (h <= 0 && m <= 0) return "بعد أقل من دقيقة";
+  var parts = [];
+  if (h > 0) parts.push(counted(h, "ساعة", "ساعتين", "ساعات", "ساعة"));
+  if (m > 0) parts.push(counted(m, "دقيقة", "دقيقتين", "دقائق", "دقيقة"));
+  return "بعد " + parts.join(" و");
+}
+function ar(n){ return String(n).replace(/\d/g, function(d){ return "٠١٢٣٤٥٦٧٨٩"[+d] }) }
+function num(n){
+  var v = Number(n);
+  if (!isFinite(v)) return ar(String(n));
+  return ar(v.toLocaleString("en-US", { maximumFractionDigits: 2 })).replace(".", "\u066B");
+}
+
+var state = JSON.parse(JSON.stringify(DEFAULTS));
+try { var l = localStorage.getItem("jtb-screen"); if (l) state = Object.assign(state, JSON.parse(l)) } catch (e) {}
+var db = null, assets = null, canWrite = false;
+
+/* ── background photos ── */
+var bg = document.getElementById("bg"), bgIdx = -1, bgTimer = null;
+function photoURL(p){
+  var id = typeof p === "string" ? p : p.id;
+  return /^(data:|https?:|\/)/.test(id) ? id : "/_blob/" + id;
+}
+function renderBg(){
+  bg.textContent = "";
+  bg.classList.toggle("empty", !(state.photos || []).length);
+  (state.photos || []).forEach(function(p){
+    var im = document.createElement("img");
+    im.src = photoURL(p); im.alt = ""; im.loading = "eager";
+    if (typeof p === "object" && p.dim) im.style.filter = "brightness(" + p.dim + ")";
+    bg.appendChild(im);
+  });
+  bgIdx = -1;
+  if (bgTimer) clearInterval(bgTimer);
+  if (bg.children.length) { nextBg(); bgTimer = setInterval(nextBg, 36000) }
+}
+function nextBg(){
+  var k = bg.children;
+  if (!k.length) return;
+  if (bgIdx >= 0 && k[bgIdx]) k[bgIdx].classList.remove("on");
+  bgIdx = (bgIdx + 1) % k.length;
+  k[bgIdx].classList.add("on");
+}
+
+/* ── stage ── */
+var stage = document.getElementById("stage"), idx = -1, timer = null;
+function buildSlides(){
+  var day = Math.floor(Date.now() / 86400000);
+  var a = AYAT[day % AYAT.length], h = AHADITH[day % AHADITH.length];
+  var out = [{ kind: "quote", eyebrow: "آية اليوم", text: a.t, src: a.s, quoted: true }];
+  (state.ann || []).forEach(function(x){
+    out.push({ kind: "ann", eyebrow: "إعلان", title: x.t, body: x.b, when: x.w });
+  });
+  (state.stats || []).forEach(function(g){
+    out.push({ kind: "stats", eyebrow: "أرقامنا", group: g });
+  });
+  out.push({ kind: "quote", eyebrow: "حديث", text: h.t, src: h.s, quoted: false });
+  if (state.target) out.push({ kind: "proj", eyebrow: "مشروع قائم" });
+  return out;
+}
+function slideEl(s){
+  var d = document.createElement("div"); d.className = "slide";
+  var eb = document.createElement("div"); eb.className = "eyebrow"; eb.textContent = s.eyebrow;
+  d.appendChild(eb);
+  if (s.kind === "quote") {
+    var p = document.createElement("p"); p.className = s.quoted ? "ayah" : "hadith";
+    if (s.quoted) {
+      var o = document.createElement("span"); o.className = "mark"; o.textContent = "﴿ ";
+      var c = document.createElement("span"); c.className = "mark"; c.textContent = " ﴾";
+      p.appendChild(o); p.appendChild(document.createTextNode(s.text)); p.appendChild(c);
+    } else { p.textContent = s.text }
+    d.appendChild(p);
+    var at = document.createElement("div"); at.className = "attrib"; at.textContent = s.src;
+    d.appendChild(at);
+  } else if (s.kind === "ann") {
+    var hh = document.createElement("h2"); hh.textContent = s.title || ""; d.appendChild(hh);
+    if (s.body) { var b = document.createElement("p"); b.className = "body"; b.textContent = s.body; d.appendChild(b) }
+    if (s.when) { var w = document.createElement("div"); w.className = "when"; w.textContent = s.when; d.appendChild(w) }
+  } else if (s.kind === "stats") {
+    var h2 = document.createElement("h2"); h2.textContent = s.group.title || "أرقامنا"; d.appendChild(h2);
+    var tiles = document.createElement("div"); tiles.className = "tiles";
+    (s.group.tiles || []).forEach(function(t2){
+      if (!t2.n) return;
+      var c = document.createElement("div"); c.className = "tile";
+      var n = document.createElement("div"); n.className = "n"; n.textContent = num(t2.n);
+      var lb = document.createElement("div"); lb.className = "l"; lb.textContent = t2.l;
+      c.appendChild(n); c.appendChild(lb); tiles.appendChild(c);
+    });
+    d.appendChild(tiles);
+  } else if (s.kind === "proj") {
+    var ph = document.createElement("h2"); ph.textContent = state.proj || "مشروع قائم"; d.appendChild(ph);
+    var pct = Math.max(0, Math.min(100, Math.round((Number(state.done) / Number(state.target)) * 100)));
+    var r1 = document.createElement("div"); r1.className = "meter-row";
+    var left = document.createElement("div");
+    var bb = document.createElement("b"); bb.textContent = ar(pct) + "٪";
+    left.appendChild(bb); left.appendChild(document.createTextNode(" مكتمل"));
+    var right = document.createElement("div");
+    right.textContent = "الباقي " + num(Math.max(0, Number(state.target) - Number(state.done))) + " " + (state.unit || "");
+    r1.appendChild(left); r1.appendChild(right); d.appendChild(r1);
+    var m = document.createElement("div"); m.className = "meter";
+    var i = document.createElement("i"); i.style.width = pct + "%"; m.appendChild(i); d.appendChild(m);
+    var r2 = document.createElement("div"); r2.className = "meter-row";
+    var a1 = document.createElement("div");
+    a1.textContent = "المنجز " + num(state.done) + " من " + num(state.target) + " " + (state.unit || "");
+    r2.appendChild(a1);
+    if (state.deadline) {
+      var days = Math.ceil((new Date(state.deadline + "T00:00:00") - new Date()) / 86400000);
+      if (isFinite(days)) {
+        var a2 = document.createElement("div");
+        a2.textContent = days >= 0 ? "باقٍ " + ar(days) + " يومًا للتسليم" : "تجاوز الموعد بـ" + ar(-days) + " يومًا";
+        r2.appendChild(a2);
+      }
+    }
+    d.appendChild(r2);
+  }
+  return d;
+}
+function renderStage(){
+  stage.textContent = "";
+  buildSlides().forEach(function(s){ stage.appendChild(slideEl(s)) });
+  idx = -1; advance();
+  if (timer) clearInterval(timer);
+  timer = setInterval(advance, 18000);
+}
+function advance(){
+  var k = stage.children;
+  if (!k.length) return;
+  if (idx >= 0 && k[idx]) k[idx].classList.remove("on");
+  idx = (idx + 1) % k.length;
+  k[idx].classList.add("on");
+}
+function renderHeader(){
+  document.getElementById("orgName").textContent = state.org || DEFAULTS.org;
+  document.getElementById("orgSub").textContent = state.sub || "";
+}
+
+var ribbon = document.getElementById("ribbon");
+function renderRibbon(times, activeKey){
+  if (ribbon.children.length !== times.length) {
+    ribbon.textContent = "";
+    times.forEach(function(t){
+      var d = document.createElement("div"); d.className = "p";
+      var n = document.createElement("div"); n.className = "pn"; n.textContent = t.n;
+      var v = document.createElement("div"); v.className = "pt"; v.textContent = ar(hm(t.h));
+      d.appendChild(n); d.appendChild(v); ribbon.appendChild(d);
+    });
+  }
+  Array.prototype.forEach.call(ribbon.children, function(el, i){
+    el.querySelector(".pt").textContent = ar(hm(times[i].h));
+    el.classList.toggle("now", times[i].k === activeKey);
+  });
+}
+function tick(){
+  var now = new Date(), h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+  var h12 = h % 12 === 0 ? 12 : h % 12;
+  var clock = document.getElementById("clock");
+  clock.textContent = ar(pad(h12) + ":" + pad(m));
+  var sec = document.createElement("span"); sec.className = "sec"; sec.textContent = ar(pad(s));
+  clock.appendChild(sec);
+  document.getElementById("ampm").textContent = h < 12 ? "صباحًا" : "مساءً";
+
+  var hj;
+  try {
+    hj = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-arab",
+      { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(now);
+    if (!/هـ|ه\u0640|AH/.test(hj)) hj += " هـ";
+  } catch (e) { hj = new Intl.DateTimeFormat("ar-SA", { weekday: "long" }).format(now) }
+  document.getElementById("hijri").textContent = hj;
+  document.getElementById("greg").textContent =
+    new Intl.DateTimeFormat("ar-EG", { day: "numeric", month: "long", year: "numeric" }).format(now) + " م";
+
+  var times = prayerTimes(now), nowH = h + m / 60 + s / 3600, next = null;
+  for (var i = 0; i < times.length; i++) {
+    if (times[i].k === "sunrise") continue;
+    if (times[i].h > nowH) { next = times[i]; break }
+  }
+  var tomorrow = false;
+  if (!next) { next = prayerTimes(new Date(now.getTime() + 86400000))[0]; tomorrow = true }
+  var diff = (next.h - nowH + (tomorrow ? 24 : 0)) * 3600;
+  var hh = Math.floor(diff / 3600), mm = Math.floor((diff % 3600) / 60), ss = Math.floor(diff % 60);
+  document.getElementById("nextName").textContent = next.n;
+  var cd = document.getElementById("nextCd");
+  cd.textContent = ar((hh > 0 ? pad(hh) + ":" : "") + pad(mm) + ":" + pad(ss));
+  document.getElementById("nextAt").textContent =
+    untilText(hh, mm) + " · الأذان " + ar(hm(next.h));
+
+  var active = null;
+  for (var j = times.length - 1; j >= 0; j--) {
+    if (times[j].k === "sunrise") continue;
+    if (times[j].h <= nowH) { active = times[j].k; break }
+  }
+  renderRibbon(times, active || "isha");
+}
+
+renderHeader(); renderStage(); renderBg(); tick(); setInterval(tick, 1000);
+
+/* ── always-on behaviour: night dimming, burn-in shift, one clean fade-in ── */
+var nightEl = document.getElementById("night");
+function dimForHour(){
+  var h = new Date().getHours() + new Date().getMinutes() / 60;
+  var o = 0;
+  if (h >= 23 || h < 5) o = .46;
+  else if (h >= 21) o = .46 * (h - 21) / 2;
+  else if (h < 7) o = .46 * (7 - h) / 2;
+  nightEl.style.opacity = o.toFixed(3);
+}
+dimForHour(); setInterval(dimForHour, 60000);
+
+var SHIFTS = [[0,0],[4,2],[8,0],[6,-3],[0,-4],[-5,-2],[-7,2]], shiftAt = 0;
+var shiftEl = document.getElementById("shift"), boardEl = document.getElementById("board");
+function nudge(){
+  var s = SHIFTS[shiftAt = (shiftAt + 1) % SHIFTS.length];
+  var tr = "translate(" + s[0] + "px," + s[1] + "px)";
+  shiftEl.style.transform = tr; boardEl.style.transform = tr;
+}
+boardEl.style.transition = "transform 3s ease";
+setInterval(nudge, 240000);
+
+document.body.classList.add("kiosk");
+window.addEventListener("load", function(){
+  setTimeout(function(){ document.getElementById("boot").classList.add("gone") }, 180);
+});
+if (document.readyState === "complete") {
+  setTimeout(function(){ document.getElementById("boot").classList.add("gone") }, 180);
+}
+document.addEventListener("keydown", function(e){
+  if (e.key === "f" || e.key === "F") {
+    var el = document.documentElement;
+    if (document.fullscreenElement) { document.exitFullscreen().catch(function(){}) }
+    else if (el.requestFullscreen) { el.requestFullscreen().catch(function(){}) }
+  }
+});
+
+/* ── editor ── */
+var panel = document.getElementById("panel"), form = document.getElementById("form"),
+    statusEl = document.getElementById("status"), shots = document.getElementById("shots"),
+    pending = [];
+function renderShots(){
+  shots.textContent = "";
+  pending.forEach(function(p, i){
+    var f = document.createElement("figure");
+    var im = document.createElement("img"); im.src = photoURL(p); im.alt = "";
+    var b = document.createElement("button"); b.type = "button"; b.textContent = "×";
+    b.setAttribute("aria-label", "حذف الصورة");
+    b.addEventListener("click", function(){ pending.splice(i, 1); renderShots() });
+    f.appendChild(im); f.appendChild(b); shots.appendChild(f);
+  });
+}
+function parseStats(text){
+  var groups = [], cur = null;
+  text.split("\n").forEach(function(line){
+    line = line.trim();
+    if (!line) return;
+    if (line.charAt(0) === "#") {
+      cur = { title: line.slice(1).trim(), tiles: [] };
+      groups.push(cur);
+      return;
+    }
+    if (!cur) { cur = { title: "أرقامنا", tiles: [] }; groups.push(cur) }
+    var p = line.split("|");
+    if (p.length < 2) return;
+    cur.tiles.push({ n: p[0].trim(), l: p[1].trim() });
+  });
+  return groups.filter(function(g){ return g.tiles.length });
+}
+function fill(){
+  form.org.value = state.org || ""; form.sub.value = state.sub || "";
+  form.stats.value = (state.stats || []).map(function(g){
+    return ["# " + (g.title || "")].concat((g.tiles || []).map(function(x){
+      return (x.n || "") + " | " + (x.l || "");
+    })).join("\n");
+  }).join("\n\n");
+  form.proj.value = state.proj || ""; form.done.value = state.done || "";
+  form.target.value = state.target || ""; form.unit.value = state.unit || "";
+  form.deadline.value = state.deadline || "";
+  form.ann.value = (state.ann || []).map(function(a){ return [a.t || "", a.b || "", a.w || ""].join(" | ") }).join("\n");
+  pending = (state.photos || []).slice(); renderShots();
+  statusEl.textContent = canWrite ? "الحفظ المشترك متاح — سيظهر التحديث على كل الشاشات."
+    : "الحفظ المشترك غير متاح هنا — سيُحفظ على هذا الجهاز فقط.";
+}
+document.getElementById("editBtn").addEventListener("click", function(){ fill(); panel.hidden = false });
+document.getElementById("closeBtn").addEventListener("click", function(){ panel.hidden = true });
+document.getElementById("fsBtn").addEventListener("click", function(){
+  var el = document.documentElement;
+  if (document.fullscreenElement) { document.exitFullscreen().catch(function(){}) }
+  else if (el.requestFullscreen) { el.requestFullscreen().catch(function(){}) }
+});
+document.getElementById("f-photos").addEventListener("change", function(ev){
+  var files = Array.prototype.slice.call(ev.target.files || []);
+  ev.target.value = "";
+  if (!files.length) return;
+  if (!assets) { statusEl.textContent = "رفع الصور غير متاح لهذا الحساب هنا."; return }
+  statusEl.textContent = "جارٍ رفع " + ar(files.length) + " صورة…";
+  Promise.all(files.map(function(f){ return assets.upload(f) }))
+    .then(function(res){
+      res.forEach(function(r){ pending.push({ id: r.id }) });
+      renderShots(); statusEl.textContent = "تم الرفع — اضغط حفظ لتظهر على الشاشة.";
+    })
+    .catch(function(){ statusEl.textContent = "تعذّر رفع الصور." });
+});
+form.addEventListener("submit", function(ev){
+  ev.preventDefault();
+  state = Object.assign(state, {
+    org: form.org.value.trim(), sub: form.sub.value.trim(),
+    stats: parseStats(form.stats.value),
+    proj: form.proj.value.trim(), done: +form.done.value || 0,
+    target: +form.target.value || 0, unit: form.unit.value.trim(),
+    deadline: form.deadline.value.trim(), photos: pending.slice(),
+    ann: form.ann.value.split("\n").map(function(line){
+      var p = line.split("|");
+      return { t: (p[0] || "").trim(), b: (p[1] || "").trim(), w: (p[2] || "").trim() };
+    }).filter(function(a){ return a.t })
+  });
+  try { localStorage.setItem("jtb-screen", JSON.stringify(state)) } catch (e) {}
+  renderHeader(); renderStage(); renderBg();
+  if (db && canWrite) {
+    statusEl.textContent = "جارٍ الحفظ…";
+    db.doc("screen/content").set(state).then(function(){
+      statusEl.textContent = "تم الحفظ على كل الشاشات.";
+      setTimeout(function(){ panel.hidden = true }, 900);
+    }).catch(function(){ statusEl.textContent = "لم يتم الحفظ المشترك — حُفظ على هذا الجهاز فقط." });
+  } else {
+    statusEl.textContent = "حُفظ على هذا الجهاز.";
+    setTimeout(function(){ panel.hidden = true }, 900);
+  }
+});
+
+/* ── shared store, uploads, wake lock — all optional ── */
+(async function(){
+  try { if (navigator.wakeLock) { await navigator.wakeLock.request("screen").catch(function(){}) } } catch (e) {}
+  if (!window.claude || !window.claude.use) return;
+  try {
+    var user = await window.claude.use("user");
+    canWrite = user ? (user.can("data.write") !== false) : false;
+    assets = await window.claude.use("assets");
+    if (assets) { document.getElementById("photoFld").hidden = false }
+    db = await window.claude.use("db");
+    if (!db) { canWrite = false; return }
+    db.doc("screen/content").onSnapshot(function(doc){
+      var d = doc && (typeof doc.data === "function" ? doc.data() : doc.data);
+      if (!d) return;
+      state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), d);
+      renderHeader(); renderStage(); renderBg();
+    }, function(){});
+  } catch (e) { db = null; canWrite = false }
+})();
+</script>
