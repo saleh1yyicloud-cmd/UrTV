@@ -108,8 +108,25 @@ body{margin:0;background:var(--navy);color:var(--cream);font-family:var(--body);
   border:1px solid rgba(219,174,106,.55);border-radius:10rem;padding:1.2rem 3.2rem;background:rgba(var(--navy-rgb),.45)}
 .pill::before{content:"";width:1.2rem;height:1.2rem;border-radius:50%;background:var(--gold);box-shadow:0 0 1.6rem var(--gold)}
 
-/* project */
-.ch.proj h2{font-size:7.2rem}
+/* project: the building's render, lit from the ground up to the completed share */
+.ch.proj{flex-direction:row;align-items:center;justify-content:space-between;gap:6rem}
+.ch.proj .txt{flex:none;width:50rem;display:flex;flex-direction:column;gap:2.4rem}
+.ch.proj h2{font-size:6.4rem}
+.bld{position:relative;flex:none;width:94rem;aspect-ratio:1800/843;
+  -webkit-mask:linear-gradient(to left,transparent,#000 9%,#000 91%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 80%,transparent);
+  -webkit-mask-composite:source-in;
+  mask:linear-gradient(to left,transparent,#000 9%,#000 91%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 80%,transparent);
+  mask-composite:intersect}
+.bld img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.bld .ghost{filter:grayscale(1) brightness(.5) contrast(.85) sepia(.2) hue-rotate(170deg);opacity:.5}
+.bld .lit{filter:brightness(1.12) saturate(1.1)}
+.bld .lit{clip-path:inset(92% 0 0 0);transition:clip-path 2.6s cubic-bezier(.2,.7,.2,1) .7s}
+.bld .lvl{position:absolute;right:6%;left:6%;top:92%;height:0;border-top:.3rem solid var(--gold);
+  box-shadow:0 0 2.4rem .4rem rgba(219,174,106,.55);transition:top 2.6s cubic-bezier(.2,.7,.2,1) .7s}
+.bld .lvl span{position:absolute;right:0;bottom:1.4rem;font-family:var(--display);font-weight:700;font-size:3.6rem;
+  color:var(--gold-2);background:rgba(var(--navy-rgb),.78);border:1px solid rgba(219,174,106,.5);border-radius:10rem;padding:.6rem 2rem}
+.focus{position:absolute;inset:0;background:var(--navy);opacity:0;transition:opacity 1.6s ease;pointer-events:none}
+.focus.on{opacity:.82}
 .big{display:flex;align-items:baseline;gap:2.4rem}
 .big .pct{font-family:var(--display);font-weight:700;font-size:20rem;line-height:.9;color:var(--gold);
   background:linear-gradient(180deg,var(--gold-2) 10%,var(--gold) 70%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -162,6 +179,7 @@ body{margin:0;background:var(--navy);color:var(--cream);font-family:var(--body);
 <div class="shift" id="shift">
   <div class="bg" id="bg"></div>
   <div class="grade"></div>
+  <div class="focus" id="focus"></div>
   <div class="rosette"></div>
 </div>
 <div class="night" id="night"></div>
@@ -246,6 +264,7 @@ var AHADITH = [
   { t: "من قرأ حرفًا من كتاب الله فله به حسنة، والحسنة بعشر أمثالها", s: "رواه الترمذي" }
 ];
 var STATS_MS = 16000, OTHER_MS = 13000;
+var BUILDING = "data:image/jpeg;base64,__BUILDING__";
 
 /* prayer times for Buraydah, computed on the device (Umm al-Qurā) */
 var LAT = 26.3260, LNG = 43.9750, TZ = 3;
@@ -399,26 +418,35 @@ function chapterEl(c){
     if (c.when) d.appendChild(reveal(el("div", "pill", c.when), i++));
   } else if (c.kind === "proj") {
     var pct = Math.max(0, Math.min(100, Math.round((Number(state.done) / Number(state.target)) * 100)));
-    d.appendChild(reveal(el("div", "kicker", "مشروع قائم"), i++));
-    d.appendChild(reveal(el("h2", null, state.proj || "مشروع قائم"), i++));
+    var txt = el("div", "txt");
+    txt.appendChild(reveal(el("div", "kicker", "مشروع قائم"), i++));
+    txt.appendChild(reveal(el("h2", null, state.proj || "مشروع قائم"), i++));
     var big = reveal(el("div", "big"), i++);
     var p = el("div", "pct", ar(0) + "٪"); p.dataset.v = pct; p.dataset.suffix = "٪";
     big.appendChild(p); big.appendChild(el("div", "of", "مكتمل"));
-    d.appendChild(big);
-    var bar = reveal(el("div", "bar"), i++), fill = el("i");
-    fill.dataset.w = pct; bar.appendChild(fill); d.appendChild(bar);
+    txt.appendChild(big);
+    // the render's ground line and roof line, as shares of the picture's height
+    var bld = reveal(el("div", "bld"), 1), cut = (92 - pct * (92 - 7) / 100).toFixed(2) + "%";
+    var ghost = el("img", "ghost"); ghost.src = BUILDING; ghost.alt = "";
+    var lit = el("img", "lit"); lit.src = BUILDING; lit.alt = "مبنى الجمعية الجديد";
+    var lvl = el("div", "lvl"); lvl.appendChild(el("span", null, ar(pct) + "٪"));
+    lit.dataset.cut = lvl.dataset.cut = cut;
+    bld.appendChild(ghost); bld.appendChild(lit); bld.appendChild(lvl);
+    d.appendChild(txt); d.appendChild(bld);
     var facts = reveal(el("div", "facts"), i++);
     var unit = state.unit === "%" ? "٪" : " " + (state.unit || "");
-    var f1 = el("div"); f1.appendChild(document.createTextNode("المنجز "));
-    f1.appendChild(el("b", null, num(state.done) + unit));
-    f1.appendChild(document.createTextNode(" من " + num(state.target) + unit));
-    facts.appendChild(f1);
+    if (state.unit !== "%") {   // a percentage already says it all
+      var f1 = el("div"); f1.appendChild(document.createTextNode("المنجز "));
+      f1.appendChild(el("b", null, num(state.done) + unit));
+      f1.appendChild(document.createTextNode(" من " + num(state.target) + unit));
+      facts.appendChild(f1);
+    }
     if (state.deadline) {
       var days = Math.ceil((new Date(state.deadline + "T00:00:00") - new Date()) / 86400000);
       if (isFinite(days)) facts.appendChild(el("div", null,
         days >= 0 ? "باقٍ " + ar(days) + " يومًا للتسليم" : "تجاوز الموعد بـ" + ar(-days) + " يومًا"));
     }
-    d.appendChild(facts);
+    txt.appendChild(facts);
   } else if (c.kind === "ayah") {
     d.appendChild(reveal(el("div", "kicker", "آية اليوم"), i++));
     var q = reveal(el("p", "ayah"), i++);
@@ -443,7 +471,10 @@ function countUp(root){
     if (k < 1 && root.classList.contains("on")) requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  Array.prototype.forEach.call(root.querySelectorAll(".bar i"), function(f){ f.style.width = f.dataset.w + "%" });
+  Array.prototype.forEach.call(root.querySelectorAll(".bld [data-cut]"), function(x){
+    if (x.classList.contains("lit")) x.style.clipPath = "inset(" + x.dataset.cut + " 0 0 0)";
+    else x.style.top = x.dataset.cut;
+  });
 }
 function renderChapters(){
   hero.textContent = ""; chaptersEl.textContent = "";
@@ -465,10 +496,11 @@ function advance(){
     prev.classList.remove("on"); prev.classList.add("leaving");
     setTimeout(function(){
       prev.classList.remove("leaving");
-      Array.prototype.forEach.call(prev.querySelectorAll(".bar i"), function(f){ f.style.width = "0" });
+      Array.prototype.forEach.call(prev.querySelectorAll(".bld [data-cut]"), function(x){ x.style.clipPath = ""; x.style.top = "" });
     }, 600);
   }
   var ms = chapters[at].kind === "stats" ? STATS_MS : OTHER_MS;
+  document.getElementById("focus").classList.toggle("on", chapters[at].kind === "proj");
   setTimeout(function(){ k[at].classList.add("on"); countUp(k[at]) }, prev ? 450 : 0);
   Array.prototype.forEach.call(dots, function(d, i){
     d.className = i < at ? "done" : "";
