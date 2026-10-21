@@ -12,7 +12,9 @@ network and the app never has to serve a font or a photo from its assets.
 Run:  python3 src/build.py
 """
 import base64
+import io
 import json
+import urllib.request
 from pathlib import Path
 
 from PIL import Image, ImageStat
@@ -33,6 +35,12 @@ PHOTOS = [
 ]
 PHOTO_WIDTH = 1920
 PHOTO_QUALITY = 78
+
+# the association's news, as its website shows them (tqb.org.sa reads the same API)
+NEWS_API = "https://api.tcamol.com/api/website/home"
+NEWS_CACHE = SRC / "news.json"   # the last list fetched, so a build without internet keeps the news
+NEWS_SHOW = 4
+NEWS_WIDTH = 1600
 
 
 def b64(path):
@@ -60,6 +68,42 @@ def photo_data(name):
     return data
 
 
+def http_get(url):
+    req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "jtb-screen-build"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read()
+
+
+def news_list():
+    """The latest published news, newest first; the cached list when the site can't be reached."""
+    try:
+        items = json.loads(http_get(NEWS_API)).get("news") or []
+        items = [{k: n.get(k) for k in ("id", "title", "excerpt", "image", "published_at", "slug")}
+                 for n in items if n.get("is_published", True) and not n.get("is_unlisted") and n.get("title")]
+        items.sort(key=lambda n: n.get("published_at") or "", reverse=True)
+        NEWS_CACHE.write_text(json.dumps(items, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        print(f"news: {len(items)} from the website")
+    except Exception as e:   # no internet, or the API changed: keep the last good list
+        items = json.loads(NEWS_CACHE.read_text(encoding="utf-8")) if NEWS_CACHE.exists() else []
+        print(f"news: website unreachable ({e}), {len(items)} from {NEWS_CACHE.name}")
+    return items[:NEWS_SHOW]
+
+
+def news_image(url):
+    if not url:
+        return None
+    try:
+        im = Image.open(io.BytesIO(http_get(url))).convert("RGB")
+    except Exception as e:
+        print(f"news: image skipped ({e})")
+        return None
+    if im.width > NEWS_WIDTH:
+        im = im.resize((NEWS_WIDTH, round(im.height * NEWS_WIDTH / im.width)), Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=80, optimize=True, progressive=True)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
 def main():
     page = (SRC / "template.html").read_text(encoding="utf-8")
 
@@ -76,6 +120,11 @@ def main():
     photos = [{"id": photo_data(p), "dim": photo_dim(p)} for p in PHOTOS]
     assert page.count("photos: [],") == 1, "template.html no longer has the photos placeholder"
     page = page.replace("photos: [],", "photos: " + json.dumps(photos, ensure_ascii=False) + ",")
+
+    news = [{"t": n["title"], "b": n.get("excerpt") or "", "d": (n.get("published_at") or "")[:10],
+             "img": news_image(n.get("image"))} for n in news_list()]
+    assert page.count("news: [],") == 1, "template.html no longer has the news placeholder"
+    page = page.replace("news: [],", "news: " + json.dumps(news, ensure_ascii=False) + ",")
 
     # no shared store and no sign-in on the TV: the page is the whole screen
     page = page.replace("  if (!window.claude || !window.claude.use) return;",

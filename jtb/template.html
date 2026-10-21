@@ -130,8 +130,23 @@ body{margin:0;background:var(--navy);color:var(--cream);font-family:var(--body);
   mask:linear-gradient(to left,transparent 4%,#000 36%),linear-gradient(to top,transparent 6%,#000 32%,#000 90%,transparent);
   mask-composite:intersect}
 .scene.on{opacity:1}
-.scene .cam{position:absolute;inset:0;transform-origin:44% 60%}
-.scene.on .cam{animation:push 14s cubic-bezier(.3,0,.3,1) forwards}
+.scene .cam{position:absolute;inset:0;transform-origin:44% 60%;opacity:0;transition:opacity 1.2s ease}
+.scene .cam.cur{opacity:1;animation:push 16s cubic-bezier(.3,0,.3,1) forwards}
+.scene img{object-fit:cover}
+
+/* news from the website */
+.ch.news .kicker .date{margin-inline-start:1.6rem;padding-inline-start:1.6rem;border-inline-start:1px solid rgba(219,174,106,.45);
+  color:var(--sky);font-weight:400}
+/* the story's picture is often a designed post with its own words, so it is shown whole in a card; a blurred
+   copy of it fills the screen behind as ambient light */
+.ch.news{flex-direction:row;align-items:center;justify-content:space-between;gap:6rem}
+.ch.news .txt{flex:none;width:66rem;display:flex;flex-direction:column;gap:2.6rem}
+.ch.news h2{font-size:6rem;line-height:1.32}
+.ch.news .body{margin:0;font-size:3rem;line-height:1.75;color:rgba(236,230,221,.9);text-wrap:pretty}
+.ch.news .card{margin:0;flex:none;width:72rem;border-radius:2.4rem;overflow:hidden;line-height:0;
+  border:1px solid rgba(236,230,221,.18);box-shadow:0 3rem 8rem rgba(0,0,0,.55)}
+.ch.news .card img{width:100%;height:auto;max-height:56rem;object-fit:contain;display:block}
+.scene .cam.amb img{filter:blur(4rem) brightness(.42) saturate(1.25);transform:scale(1.15)}
 @keyframes push{from{transform:scale(1)}to{transform:scale(1.08)}}
 .scene img{position:absolute;inset:0;width:100%;height:100%;display:block}
 .scene img{filter:brightness(1.06) saturate(1.06)}
@@ -237,6 +252,7 @@ var DEFAULTS = {
   sub: "إدارة الاتصال المؤسسي",
   proj: "مبنى الجمعية الجديد", done: 20, target: 100, unit: "%", deadline: "",
   photos: [],
+  news: [],
   stats: [
     { title: "ثمار الربع الثالث ١٤٤٨هـ", tiles: [
       { n: "21", l: "خاتمًا للقرآن في برامج الإقراء" },
@@ -277,11 +293,32 @@ var AHADITH = [
 var STATS_MS = 16000, OTHER_MS = 13000;
 var BUILDING = "data:image/jpeg;base64,__BUILDING__";
 
+/* chapters with a picture of their own (the building, a news story) show it full size, in place of the
+   rotating photographs */
 function renderScene(){
-  var scene = document.getElementById("scene"), cam = el("div", "cam");
+  var scene = document.getElementById("scene");
   scene.textContent = "";
-  var im = el("img"); im.src = BUILDING; im.alt = "مبنى الجمعية الجديد"; cam.appendChild(im);
-  scene.appendChild(cam);
+  chapters.forEach(function(c, i){
+    if (!c.img) return;
+    var cam = el("div", c.kind === "news" ? "cam amb" : "cam"); cam.dataset.i = i;
+    var im = el("img"); im.src = c.img; im.alt = c.title || state.proj || ""; cam.appendChild(im);
+    scene.appendChild(cam);
+  });
+}
+function showScene(i){
+  var on = !!chapters[i].img;
+  document.getElementById("focus").classList.toggle("on", on);
+  document.getElementById("scene").classList.toggle("on", on);
+  Array.prototype.forEach.call(document.getElementById("scene").children, function(cam){
+    cam.classList.toggle("cur", +cam.dataset.i === i);
+  });
+}
+function newsDate(iso){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || "")) return "";
+  try {
+    return new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-arab",
+      { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso + "T12:00:00"));
+  } catch (e) { return "" }
 }
 var RING_C = 2 * Math.PI * 90;   // the ring's circumference, in its own units
 function ringEl(pct){
@@ -422,8 +459,14 @@ function buildChapters(){
   var stats = (state.stats || []).map(function(g){ return { kind: "stats", group: g } });
   var others = [{ kind: "ayah", text: a.t, src: a.s }];
   (state.ann || []).forEach(function(x){ others.push({ kind: "ann", title: x.t, body: x.b, when: x.w }) });
-  if (state.target) others.push({ kind: "proj" });
+  if (state.target) others.push({ kind: "proj", img: BUILDING });
   others.push({ kind: "hadith", text: h.t, src: h.s });
+  var news = (state.news || []).map(function(n){ return { kind: "news", title: n.t, body: n.b, date: n.d, img: n.img } });
+  var rest = others; others = [];   // the website's news, every other chapter among the rest
+  while (rest.length || news.length) {
+    if (rest.length) others.push(rest.shift());
+    if (news.length) others.push(news.shift());
+  }
   var out = [];   // achievements lead, and come back between everything else
   while (stats.length || others.length) {
     if (stats.length) out.push(stats.shift());
@@ -483,6 +526,20 @@ function chapterEl(c){
     d.appendChild(reveal(el("div", "kicker", "حديث"), i++));
     d.appendChild(reveal(el("p", "hadith", "«" + c.text + "»"), i++));
     d.appendChild(reveal(el("div", "src", c.src), i++));
+  } else if (c.kind === "news") {
+    var nt = el("div", "txt");
+    var head = reveal(el("div", "kicker", "أخبار الجمعية"), i++);
+    var when = newsDate(c.date);
+    if (when) head.appendChild(el("span", "date", when));
+    nt.appendChild(head);
+    nt.appendChild(reveal(el("h2", null, c.title), i++));
+    if (c.body) nt.appendChild(reveal(el("p", "body", c.body), i++));
+    nt.appendChild(reveal(el("div", "src", "tqb.org.sa"), i++));
+    d.appendChild(nt);
+    if (c.img) {
+      var card = reveal(el("figure", "card"), 1), ci = el("img"); ci.src = c.img; ci.alt = c.title;
+      card.appendChild(ci); d.appendChild(card);
+    }
   }
   return d;
 }
@@ -506,7 +563,7 @@ function countUp(root){
 function renderChapters(){
   hero.textContent = ""; chaptersEl.textContent = "";
   chapters = buildChapters();
-  if (state.target) renderScene();
+  renderScene();
   chapters.forEach(function(c){
     hero.appendChild(chapterEl(c));
     var s = el("span"); s.appendChild(el("i")); chaptersEl.appendChild(s);
@@ -528,8 +585,7 @@ function advance(){
     }, 600);
   }
   var ms = chapters[at].kind === "stats" || chapters[at].kind === "proj" ? STATS_MS : OTHER_MS;
-  document.getElementById("focus").classList.toggle("on", chapters[at].kind === "proj");
-  document.getElementById("scene").classList.toggle("on", chapters[at].kind === "proj");
+  showScene(at);
   setTimeout(function(){ k[at].classList.add("on"); countUp(k[at]) }, prev ? 450 : 0);
   Array.prototype.forEach.call(dots, function(d, i){
     d.className = i < at ? "done" : "";

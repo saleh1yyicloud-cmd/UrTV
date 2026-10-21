@@ -1,0 +1,39 @@
+name: News from the website
+
+# Every three hours: rebuild the screen with the latest news from tqb.org.sa and commit it if anything
+# changed. The TVs pull dist/tv.html from here on their own (every six hours, or at once from the app).
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: news
+  cancel-in-progress: false
+
+jobs:
+  news:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build the page with the latest news
+        run: |
+          python -m pip install --quiet pillow
+          python src/build.py
+
+      - name: Commit if the news changed
+        run: |
+          git add dist jtb/news.json
+          if git diff --cached --quiet; then echo "No new news."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "أخبار الموقع"
+          git push
