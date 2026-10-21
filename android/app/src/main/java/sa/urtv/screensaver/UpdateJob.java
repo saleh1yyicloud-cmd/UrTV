@@ -17,7 +17,9 @@ public class UpdateJob extends JobService {
     static void schedule(Context c) {
         JobScheduler js = (JobScheduler) c.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (js == null) return;
-        for (JobInfo j : js.getAllPendingJobs()) if (j.getId() == ID) return;
+        // keep a scheduled job only if it runs at today's interval (an update may have changed it)
+        for (JobInfo j : js.getAllPendingJobs())
+            if (j.getId() == ID) { if (j.getIntervalMillis() == Updater.INTERVAL_MS) return; js.cancel(ID); }
         js.schedule(new JobInfo.Builder(ID, new ComponentName(c, UpdateJob.class))
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
             .setPeriodic(Updater.INTERVAL_MS)

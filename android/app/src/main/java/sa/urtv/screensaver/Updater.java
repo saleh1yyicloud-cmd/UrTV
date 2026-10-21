@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 final class Updater {
     static final String URL_PAGE =
         PhotoCache.REPO + "dist/tv.html";
-    static final long INTERVAL_MS = 6L * 3600 * 1000;
+    static final long INTERVAL_MS = 1L * 3600 * 1000;   // hourly: an unchanged page costs only a 304 (ETag)
 
     private static final String OFF = "التحديث التلقائي متوقف";
     private static final String RECENT = "تم الفحص مؤخراً";
