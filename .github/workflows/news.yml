@@ -31,7 +31,7 @@ jobs:
 
       - name: Commit if the news changed
         run: |
-          git add dist jtb/news.json
+          git add dist jtb/news.json jtb/stats.json
           if git diff --cached --quiet; then echo "No new news."; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

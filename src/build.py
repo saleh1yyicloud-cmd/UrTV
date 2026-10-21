@@ -14,6 +14,7 @@ Run:  python3 src/build.py
 import base64
 import io
 import json
+import re
 import urllib.request
 from pathlib import Path
 
@@ -39,6 +40,7 @@ PHOTO_QUALITY = 78
 # the association's news, as its website shows them (tqb.org.sa reads the same API)
 NEWS_API = "https://api.tcamol.com/api/website/home"
 NEWS_CACHE = SRC / "news.json"   # the last list fetched, so a build without internet keeps the news
+STATS_CACHE = SRC / "stats.json"   # likewise for the association's figures
 NEWS_SHOW = 4
 NEWS_WIDTH = 1600
 
@@ -74,19 +76,72 @@ def http_get(url):
         return r.read()
 
 
+_home = None
+def site_home():
+    """The website's home data (news, statistics), fetched once per build; None when unreachable."""
+    global _home
+    if _home is None:
+        try:
+            _home = json.loads(http_get(NEWS_API))
+        except Exception as e:
+            print(f"website unreachable ({e})")
+            _home = {}
+    return _home or None
+
+
+def cached(cache, fresh):
+    """fresh() from the website, saved to cache; the cache's last good copy when the site can't be reached."""
+    home = site_home()
+    if home is not None:
+        try:
+            items = fresh(home)
+            cache.write_text(json.dumps(items, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+            print(f"{cache.stem}: {len(items)} from the website")
+            return items
+        except Exception as e:   # the API changed shape: keep the last good copy
+            print(f"{cache.stem}: unreadable ({e})")
+    items = json.loads(cache.read_text(encoding="utf-8")) if cache.exists() else []
+    print(f"{cache.stem}: {len(items)} from {cache.name}")
+    return items
+
+
 def news_list():
-    """The latest published news, newest first; the cached list when the site can't be reached."""
-    try:
-        items = json.loads(http_get(NEWS_API)).get("news") or []
+    """The latest published news, newest first."""
+    def fresh(home):
         items = [{k: n.get(k) for k in ("id", "title", "excerpt", "image", "published_at", "slug")}
-                 for n in items if n.get("is_published", True) and not n.get("is_unlisted") and n.get("title")]
+                 for n in home.get("news") or []
+                 if n.get("is_published", True) and not n.get("is_unlisted") and n.get("title")]
         items.sort(key=lambda n: n.get("published_at") or "", reverse=True)
-        NEWS_CACHE.write_text(json.dumps(items, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-        print(f"news: {len(items)} from the website")
-    except Exception as e:   # no internet, or the API changed: keep the last good list
-        items = json.loads(NEWS_CACHE.read_text(encoding="utf-8")) if NEWS_CACHE.exists() else []
-        print(f"news: website unreachable ({e}), {len(items)} from {NEWS_CACHE.name}")
-    return items[:NEWS_SHOW]
+        return items
+    return cached(NEWS_CACHE, fresh)[:NEWS_SHOW]
+
+
+def site_stats():
+    """The association's figures as the website's home page shows them, in its order, cut into chapters of
+    three or four. Values like "5,000,000 وجه" keep only the number; the label already names the unit."""
+    def fresh(home):
+        items = sorted((s for s in home.get("statistics") or [] if s.get("is_active", True)),
+                       key=lambda s: s.get("sort_order") or 0)
+        return [{"label": s["label"], "value": s["value"], "updated": (s.get("updated_at") or "")[:10]}
+                for s in items if s.get("label") and s.get("value")]
+    items = cached(STATS_CACHE, fresh)
+    tiles = []
+    for s in items:
+        m = re.search(r"\d[\d,.]*", s["value"])
+        if m:
+            tiles.append({"n": m.group(0).replace(",", ""), "l": s["label"]})
+    if not tiles:
+        return []
+    year = max((s["updated"][:4] for s in items if s.get("updated")), default="")
+    year = year.translate(str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩"))
+    title = "أرقام وإحصائيات الجمعية" + (f" لعام {year}م" if year else "")
+    count = -(-len(tiles) // 4)                      # chapters needed at four a chapter, shared out evenly
+    groups, start = [], 0
+    for k in range(count):
+        size = len(tiles) // count + (1 if k < len(tiles) % count else 0)
+        groups.append({"title": title, "tiles": tiles[start:start + size]})
+        start += size
+    return groups
 
 
 def news_image(url):
@@ -125,6 +180,9 @@ def main():
              "img": news_image(n.get("image"))} for n in news_list()]
     assert page.count("news: [],") == 1, "template.html no longer has the news placeholder"
     page = page.replace("news: [],", "news: " + json.dumps(news, ensure_ascii=False) + ",")
+
+    assert page.count("siteStats: [],") == 1, "template.html no longer has the site statistics placeholder"
+    page = page.replace("siteStats: [],", "siteStats: " + json.dumps(site_stats(), ensure_ascii=False) + ",")
 
     # no shared store and no sign-in on the TV: the page is the whole screen
     page = page.replace("  if (!window.claude || !window.claude.use) return;",

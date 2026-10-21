@@ -95,7 +95,10 @@ body{margin:0;background:var(--navy);color:var(--cream);font-family:var(--body);
 .figs{display:flex;align-items:stretch;margin-top:2.4rem}
 .fig{padding-inline:5.2rem;border-inline-start:1px solid rgba(219,174,106,.32);min-width:0;max-width:38rem}
 .fig:first-child{padding-inline-start:0;border-inline-start:0}
-.fig .n{font-family:var(--display);font-weight:700;font-size:12.8rem;line-height:1;white-space:nowrap;
+.fig .nrow{display:flex;align-items:baseline;gap:1.6rem;white-space:nowrap}
+.fig .u{font-family:var(--display);font-weight:700;font-size:calc(var(--fs,12.8rem) * .42);color:var(--gold-2)}
+.fig .n{direction:ltr;unicode-bidi:isolate;   /* a grouped figure (٤٧ ٣٣٧) must stay one left-to-right run */
+  font-family:var(--display);font-weight:700;font-size:var(--fs,12.8rem);line-height:1;white-space:nowrap;
   font-variant-numeric:tabular-nums;color:var(--gold);
   background:linear-gradient(180deg,var(--gold-2) 10%,var(--gold) 70%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   filter:drop-shadow(0 .6rem 2.4rem rgba(0,0,0,.35))}
@@ -253,6 +256,7 @@ var DEFAULTS = {
   proj: "مبنى الجمعية الجديد", done: 20, target: 100, unit: "%", deadline: "",
   photos: [],
   news: [],
+  siteStats: [],   // the website's figures, filled in by the build; they lead the achievements
   stats: [
     { title: "ثمار الربع الثالث ١٤٤٨هـ", tiles: [
       { n: "21", l: "خاتمًا للقرآن في برامج الإقراء" },
@@ -273,10 +277,7 @@ var DEFAULTS = {
       { n: "3.85", l: "متوسط التقييم من ٤" }
     ]}
   ],
-  ann: [
-    { t: "التسجيل في الحلقات الصيفية", b: "فُتح التسجيل لحلقات الصيف في جميع الفروع، والمقاعد محدودة.", w: "حتى نهاية الشهر" },
-    { t: "حفل تكريم الحفاظ", b: "تكريم خاتمي القرآن الكريم لهذا العام بحضور أعضاء مجلس الإدارة.", w: "الخميس — ٨:٠٠ مساءً" }
-  ]
+  ann: []
 };
 var AYAT = [
   { t: "وَلَقَدْ يَسَّرْنَا ٱلْقُرْءَانَ لِلذِّكْرِ فَهَلْ مِن مُّدَّكِرٍۢ", s: "القمر ١٧" },
@@ -414,7 +415,14 @@ function decimals(n){ var m = String(n).match(/\.(\d+)$/); return m ? m[1].lengt
 function num(v, dp){
   if (!isFinite(Number(v))) return ar(String(v));
   var s = Number(v).toLocaleString("en-US", { minimumFractionDigits: dp || 0, maximumFractionDigits: dp || 0, useGrouping: false });
+  // five digits and more are grouped by a thin space (٦٧١ ١٤٣); the faces' own comma is too heavy at this size
+  if (Math.abs(Number(v)) >= 10000) s = s.replace(/^(\d+)/, function(d){ return d.replace(/\B(?=(\d{3})+$)/g, "‎ ‎") });
+  // a plain space (Zunburk has no width for U+202F; .n is nowrap), held between left-to-right marks: between two
+  // runs of Arabic-Indic digits a bare space resolves right-to-left and would swap the groups
   return ar(s).replace(".", "٫");
+}
+function millions(n){   // the Arabic counted noun for n million
+  return n === 1 ? "مليون" : n === 2 ? "مليونان" : (n >= 3 && n <= 10 && n === Math.floor(n)) ? "ملايين" : "مليون";
 }
 function el(tag, cls, text){
   var d = document.createElement(tag);
@@ -456,7 +464,7 @@ var chapters = [], at = -1, timer = null;
 function buildChapters(){
   var day = Math.floor(Date.now() / 86400000);
   var a = AYAT[day % AYAT.length], h = AHADITH[day % AHADITH.length];
-  var stats = (state.stats || []).map(function(g){ return { kind: "stats", group: g } });
+  var stats = (state.siteStats || []).concat(state.stats || []).map(function(g){ return { kind: "stats", group: g } });
   var others = [{ kind: "ayah", text: a.t, src: a.s }];
   (state.ann || []).forEach(function(x){ others.push({ kind: "ann", title: x.t, body: x.b, when: x.w }) });
   if (state.target) others.push({ kind: "proj", img: BUILDING });
@@ -481,12 +489,23 @@ function chapterEl(c){
     d.appendChild(reveal(el("div", "kicker", "إنجازاتنا"), i++));
     d.appendChild(reveal(el("h2", null, c.group.title || "أرقامنا"), i++));
     var figs = el("div", "figs");
+    // long figures (189414, 5000000…) get a smaller face so the row still fits the 140rem it has
+    var shown = (c.group.tiles || []).filter(function(t){ return t.n });
+    // a round figure in the millions reads better as words: ٥ ملايين
+    function big(t){ var v = Number(t.n); return v >= 1e6 && v % 1e5 === 0 ? v / 1e6 : null }
+    var digits = shown.reduce(function(s, t){
+      var m = big(t); return s + (m !== null ? String(m).length + 3.5 : String(t.n).replace(/\D/g, "").length * 1.1);
+    }, 0);
+    var fs = Math.min(12.8, (140 - 10.4 * Math.max(0, shown.length - 1)) / (Math.max(1, digits) * .6));
+    figs.style.setProperty("--fs", fs.toFixed(2) + "rem");
     (c.group.tiles || []).forEach(function(t){
       if (!t.n) return;
-      var f = reveal(el("div", "fig"), i++);
+      var f = reveal(el("div", "fig"), i++), m = big(t), row = el("div", "nrow");
       var n = el("div", "n", num(0, decimals(t.n)));
-      n.dataset.v = t.n;
-      f.appendChild(n); f.appendChild(el("div", "l", t.l));
+      n.dataset.v = m !== null ? m : t.n;
+      row.appendChild(n);
+      if (m !== null) row.appendChild(el("span", "u", millions(m)));
+      f.appendChild(row); f.appendChild(el("div", "l", t.l));
       figs.appendChild(f);
     });
     d.appendChild(figs);
