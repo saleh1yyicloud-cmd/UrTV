@@ -1,4 +1,4 @@
-package sa.urtv.screensaver;
+package sa.urtv.guests;
 
 import android.app.Activity;
 import android.graphics.Color;
@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * «عرض الضيوف»: the association's presentation for visitors, as a video, from its own home-screen tile.
- * The video is kept on the TV by Guests (downloaded once, refreshed by the hourly job).
+ * The video is kept on the TV by Guests: downloaded the first time, and checked for a newer one at each opening.
  * Remote: OK pauses / resumes, right and left go to the next and previous slide, Back closes.
  */
 public class GuestsActivity extends Activity {
@@ -37,7 +37,12 @@ public class GuestsActivity extends Activity {
         root.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
 
-        if (Guests.video(this).isFile()) { play(); return; }
+        if (Guests.video(this).isFile()) {
+            play();
+            // meanwhile look for a newer presentation, for the next visit (this one keeps playing)
+            new Thread(new Runnable() { @Override public void run() { Guests.sync(getApplicationContext()); } }).start();
+            return;
+        }
         // first time on this TV: fetch it now (the hourly job normally has it ready)
         note = new TextView(this);
         note.setText("جارٍ تجهيز عرض الضيوف…");

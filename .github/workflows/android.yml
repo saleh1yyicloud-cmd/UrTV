@@ -51,12 +51,13 @@ jobs:
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk urtv-screensaver.apk
           cp android/launcher/build/outputs/apk/release/launcher-release.apk urtv-home.apk
+          cp android/guests/build/outputs/apk/release/guests-release.apk urtv-guests.apk
 
       # apksigner, not keytool: the home APK has no v1 (JAR) signature, so keytool sees no signer in it
       - name: Which key signed them
         run: |
           apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-          for f in urtv-screensaver.apk urtv-home.apk; do
+          for f in urtv-screensaver.apk urtv-home.apk urtv-guests.apk; do
             echo "$f:"; "$apksigner" verify --print-certs "$f" | grep -m2 -E 'certificate (DN|SHA-256)'
           done
 
@@ -66,6 +67,7 @@ jobs:
           path: |
             urtv-screensaver.apk
             urtv-home.apk
+            urtv-guests.apk
 
       # fixed download links: .../releases/download/apk-latest/urtv-screensaver.apk and urtv-home.apk
       - name: Publish to the apk-latest release
@@ -78,6 +80,7 @@ jobs:
           files: |
             urtv-screensaver.apk
             urtv-home.apk
+            urtv-guests.apk
           make_latest: true
 
       # and every build kept under its own number, the apps' version: APK_TAG=v3.N optimize/install.sh all
@@ -91,6 +94,7 @@ jobs:
           files: |
             urtv-screensaver.apk
             urtv-home.apk
+            urtv-guests.apk
           make_latest: false
 
       # next: one test release, replaced by each build; install with APK_TAG=apk-next optimize/install.sh all
@@ -104,5 +108,6 @@ jobs:
           files: |
             urtv-screensaver.apk
             urtv-home.apk
+            urtv-guests.apk
           prerelease: true
           make_latest: false

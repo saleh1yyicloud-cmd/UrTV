@@ -1,4 +1,4 @@
-package sa.urtv.screensaver;
+package sa.urtv.guests;
 
 import android.content.Context;
 
@@ -13,7 +13,7 @@ import java.net.URL;
 /**
  * The visitors' presentation («عرض الضيوف»), kept on the TV. It lives in the repository's "guests" release as
  * two files: guests.mp4, and guests.txt (line 1: slide start times in ms, comma-separated; line 2: a stamp
- * of the video). The hourly job fetches guests.txt and downloads the video only when the text changed, so a
+ * of the video). Each opening fetches guests.txt and downloads the video only when the text changed, so a
  * new presentation reaches the TV without touching it.
  */
 final class Guests {

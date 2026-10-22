@@ -1,0 +1,45 @@
+plugins {
+    id 'com.android.application'
+}
+
+// «عرض الضيوف»: the visitors' presentation, as its own small app so it gets its own home-screen tile
+// (Google TV shows one tile per app)
+android {
+    namespace 'sa.urtv.guests'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'sa.urtv.guests'
+        minSdk 21
+        targetSdk 34
+        // the same version as the screensaver (see android/app/build.gradle)
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
+        versionName "3.${System.getenv('GITHUB_RUN_NUMBER') ?: '0'}"
+    }
+
+    signingConfigs {
+        // the same key as the other two apps, from the repository's secrets; debug key for local builds
+        if (System.getenv('ANDROID_KEYSTORE')) {
+            release {
+                storeFile file(System.getenv('ANDROID_KEYSTORE'))
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias 'urtv'
+                keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.findByName('release') ?: signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint { abortOnError false }
+}
