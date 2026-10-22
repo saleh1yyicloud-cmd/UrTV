@@ -91,9 +91,9 @@ public class GuestsActivity extends Activity {
         holds.clear();
         try {
             String[] lines = Guests.read(f).trim().split("\n");
-            for (String s : lines[0].split("[,\s]+")) if (!s.isEmpty()) slides.add(Integer.parseInt(s));
+            for (String s : lines[0].split("[,\\s]+")) if (!s.isEmpty()) slides.add(Integer.parseInt(s));
             if (lines.length > 1 && !lines[1].startsWith("v="))
-                for (String s : lines[1].split("[,\s]+")) if (!s.isEmpty()) holds.add(Integer.parseInt(s));
+                for (String s : lines[1].split("[,\\s]+")) if (!s.isEmpty()) holds.add(Integer.parseInt(s));
         } catch (Exception e) {
             slides.clear();
             holds.clear();
