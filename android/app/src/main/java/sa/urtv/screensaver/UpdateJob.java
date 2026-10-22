@@ -32,6 +32,7 @@ public class UpdateJob extends JobService {
         new Thread(new Runnable() {
             @Override public void run() {
                 Updater.check(getApplicationContext(), false);
+                Guests.sync(getApplicationContext());   // so the visitors' presentation is ready before a visit
                 jobFinished(p, false);
             }
         }).start();

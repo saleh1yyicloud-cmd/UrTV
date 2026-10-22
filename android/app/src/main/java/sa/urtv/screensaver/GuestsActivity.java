@@ -13,18 +13,17 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * «عرض الضيوف»: the association's presentation for visitors, as a video, from its own home-screen tile.
- * The video and its slide times are copied onto the TV by ADB, into the app's own folder:
- *   /sdcard/Android/data/sa.urtv.screensaver/files/guests.mp4
- *   /sdcard/Android/data/sa.urtv.screensaver/files/guests.txt   slide start times in ms, comma-separated
+ * The video is kept on the TV by Guests (downloaded once, refreshed by the hourly job).
  * Remote: OK pauses / resumes, right and left go to the next and previous slide, Back closes.
  */
 public class GuestsActivity extends Activity {
+    private FrameLayout root;
+    private TextView note;
     private VideoView video;
     private final List<Integer> slides = new ArrayList<>();
 
@@ -32,28 +31,40 @@ public class GuestsActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);   // no screensaver mid-visit
-        FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
+        root = new FrameLayout(this);
+        root.setBackgroundColor(Color.rgb(7, 44, 73));
         setContentView(root);
         root.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
 
-        File dir = getExternalFilesDir(null);
-        File mp4 = dir == null ? null : new File(dir, "guests.mp4");
-        if (mp4 == null || !mp4.isFile()) {
-            TextView t = new TextView(this);
-            t.setText("لم يُنسخ عرض الضيوف إلى هذا التلفزيون بعد");
-            t.setTextColor(Color.WHITE);
-            t.setTextSize(28);
-            t.setGravity(Gravity.CENTER);
-            root.addView(t, new FrameLayout.LayoutParams(-1, -1));
-            return;
-        }
-        readSlides(new File(dir, "guests.txt"));
+        if (Guests.video(this).isFile()) { play(); return; }
+        // first time on this TV: fetch it now (the hourly job normally has it ready)
+        note = new TextView(this);
+        note.setText("جارٍ تجهيز عرض الضيوف…");
+        note.setTextColor(Color.rgb(236, 230, 221));
+        note.setTextSize(30);
+        note.setGravity(Gravity.CENTER);
+        root.addView(note, new FrameLayout.LayoutParams(-1, -1));
+        new Thread(new Runnable() {
+            @Override public void run() {
+                final boolean ok = Guests.sync(getApplicationContext());
+                runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        if (isFinishing()) return;
+                        if (ok && Guests.video(GuestsActivity.this).isFile()) { root.removeView(note); play(); }
+                        else note.setText("تعذّر تجهيز عرض الضيوف — تأكد من اتصال التلفزيون بالإنترنت");
+                    }
+                });
+            }
+        }).start();
+    }
 
+    private void play() {
+        readSlides(Guests.times(this));
+        root.setBackgroundColor(Color.BLACK);
         video = new VideoView(this);
         root.addView(video, new FrameLayout.LayoutParams(-1, -1, Gravity.CENTER));
-        video.setVideoPath(mp4.getAbsolutePath());
+        video.setVideoPath(Guests.video(this).getAbsolutePath());
         video.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override public void onPrepared(MediaPlayer mp) { video.start(); }
         });
@@ -61,14 +72,10 @@ public class GuestsActivity extends Activity {
     }
 
     private void readSlides(File f) {
-        if (!f.isFile()) return;
+        slides.clear();
         try {
-            FileInputStream in = new FileInputStream(f);
-            byte[] buf = new byte[(int) Math.min(f.length(), 8192)];
-            int n = in.read(buf);
-            in.close();
-            for (String s : new String(buf, 0, Math.max(0, n), "UTF-8").trim().split("[,\\s]+"))
-                if (!s.isEmpty()) slides.add(Integer.parseInt(s));
+            String first = Guests.read(f).trim().split("\n")[0];
+            for (String s : first.split("[,\\s]+")) if (!s.isEmpty()) slides.add(Integer.parseInt(s));
         } catch (Exception e) {
             slides.clear();
         }
