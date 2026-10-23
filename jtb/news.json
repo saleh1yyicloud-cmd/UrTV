@@ -1,5 +1,21 @@
 [
  {
+  "id": 31,
+  "title": "تحفيظ بريدة تستقبل الرئيس التنفيذي لشركة دينار للاستثمار وتبحث فرص التعاون",
+  "excerpt": "استقبلت جمعية تحفيظ القرآن الكريم ببريدة، صباح الخميس، سعادة الدكتور أحمد بن سليمان القفاري، الرئيس التنفيذي لشركة دينار للاستثمار، في زيارة جرى خلالها استعراض مسيرة الجمعية وجهودها في تعليم القرآن الكريم وعلومه، وبحث فرص التعاون في المجالات ذات الاهتمام المشترك",
+  "image": "https://tcamol-storage-app-public.s3.amazonaws.com/website/uploads/news/1792753786_6adb407ad0401.jpeg",
+  "published_at": "2026-10-22T00:00:00.000000Z",
+  "slug": "thfyth-bryd-tstkbl-alryys-altnfythy-lshrk-dynar-llastthmar-otbhth-frs-altaaaon"
+ },
+ {
+  "id": 30,
+  "title": "وفد اللجنة التنسيقية لجمعيات تحفيظ القرآن الكريم يزور تحفيظ بريدة ويطّلع على تجربتها المؤسسية",
+  "excerpt": "استقبلت جمعية تحفيظ القرآن الكريم ببريدة، صباح الخميس، وفد اللجنة التنسيقية لجمعيات تحفيظ القرآن الكريم بالمملكة، برئاسة المدير التنفيذي الأستاذ حمد الفراج ، في زيارة خُصصت للاطلاع على تجربة الجمعية وتبادل الخبرات في المجالات التعليمية والإدارية والتقنية.",
+  "image": "https://tcamol-storage-app-public.s3.amazonaws.com/website/uploads/news/1792753572_6adb3fa46cfe8.jpeg",
+  "published_at": "2026-10-22T00:00:00.000000Z",
+  "slug": "ofd-allgn-altnsyky-lgmaayat-thfyth-alkran-alkrym-yzor-thfyth-bryd-oytlaa-aal-tgrbtha-almossy"
+ },
+ {
   "id": 29,
   "title": "جمعية تحفيظ القرآن الكريم ببريدة تحصل على شهادة الاستثمار ذي الأثر الاجتماعي",
   "excerpt": "حين يُقاس الاستثمار بأثره في الناس، يغدو جزءًا من الرسالة نفسها؛ وعلى هذا المعيار نالت الجمعية شهادة من المركز الوطني لتنمية القطاع غير الربحي.",
@@ -46,21 +62,5 @@
   "image": "https://tcamol-storage-app-public.s3.amazonaws.com/website/uploads/news/1790966428_6abffa9cc8cf6.jpeg",
   "published_at": "2026-09-21T00:00:00.000000Z",
   "slug": "adar-alastratygy-oaltmyz-almossy-tkym-lkaaa-bnaaa-alatgahat-nho-adar-almaarf"
- },
- {
-  "id": 22,
-  "title": "جمعية تحفيظ القرآن الكريم ببريدة تعقد اجتماع جمعيتها العمومية",
-  "excerpt": "محطة مؤسسية يُسهم فيها الأعضاء في صناعة القرار، وتتجدد بها الصلة بين الجمعية ومن يحملون رسالتها.",
-  "image": "https://tcamol-storage-app-public.s3.amazonaws.com/website/uploads/news/1790966118_6abff96616c91.jpeg",
-  "published_at": "2026-09-20T00:00:00.000000Z",
-  "slug": "gmaay-thfyth-alkran-alkrym-bbryd-taakd-agtmaaa-gmaaytha-alaamomy"
- },
- {
-  "id": 25,
-  "title": "جمعية تحفيظ القرآن الكريم ببريدة توقّع اتفاقية شراكة مع «مؤسسة إدارة المعرفة»",
-  "excerpt": "ما يكتسبه العاملون من خبرة رصيدٌ للجمعية لا ينبغي أن يرحل برحيلهم؛ ولحفظه وتداوله جاءت هذه الشراكة، وصحبتها ورشة في بناء الاتجاهات نحو إدارة المعرفة.",
-  "image": "https://tcamol-storage-app-public.s3.amazonaws.com/website/uploads/news/1790967143_6abffd6792927.jpg",
-  "published_at": "2026-09-14T00:00:00.000000Z",
-  "slug": "gmaay-thfyth-alkran-alkrym-bbryd-tokaa-atfaky-shrak-maa-moss-adar-almaarf"
  }
 ]
